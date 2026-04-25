@@ -1,6 +1,6 @@
 # Current Project Status — ProjectName
 
-**Last updated:** 2026-04-25 21:30
+**Last updated:** 2026-04-25 22:30
 **Author**: Julián Calderón Almendros
 
 ---
@@ -11,9 +11,9 @@
 |--------|-------|
 | Total modules | 12 |
 | Modules with 0 sorry | 12 / 12 |
-| Total theorems proven | 64 |
-| Total definitions | 22 |
-| Total notations | 10 |
+| Total theorems proven | 74 |
+| Total definitions | 26 |
+| Total notations | 11 |
 | Build status | ✅ Passing |
 | Lean version | v4.28.0 |
 | Naming convention | Mathlib-style (see NAMING-CONVENTIONS.md) |
@@ -34,7 +34,7 @@
 | `Deduction.lean` | 1 | 0 | 0 | ✅ Complete |
 | `Semantics.lean` | 13 | 8 | 0 | ✅ Complete |
 | `Soundness.lean` | 1 | 0 | 0 | ✅ Complete |
-| `Completeness.lean`| 22 | 8 | 0 | ✅ Complete |
+| `Completeness.lean`| 32 | 12 | 0 | ✅ Complete |
 | `Compacity.lean`   | 2 | 0 | 0 | ✅ Complete |
 
 *Status codes*: ✅ Complete · 🧊 Frozen · 🔶 Partial · 🔄 In progress · ❌ Pending
@@ -53,12 +53,13 @@
 - Demostrado el Teorema de Completitud de Gödel y Lema de Lindenbaum.
 - Alcanzados 0 sorries en todo el proyecto; demostrada Compacidad y Consistencia.
 - Preparación para bifurcar el proyecto hacia FOL con Igualdad.
+- Implementación completa de la Fase 6: FOL con Igualdad (Sintaxis, Semántica, Corrección y Completitud con dominios cociente).
 
 ---
 
 ## Pending Work
 
-- [ ] Extender `Formula` con el predicado de igualdad en la nueva rama `feature/fol-igualdad`.
+- 🎉 **¡Fase 6 Completada!** Considerar la adición de teoremas derivados de la igualdad (simetría, transitividad pura) en un nuevo módulo `Theorems/Eq.lean`.
 
 ---
 
@@ -92,7 +93,7 @@ ProjectName/
 | Phase 3: Naming migration | Adopt Mathlib naming conventions | ✅ Complete |
 | Phase 4: Automatización | Investigar y automatizar identidad, debilitamiento y rewrite_at | ✅ Complete |
 | Phase 5: Metamatemática | Teorema de Deducción, Corrección y Completitud | ✅ Complete |
-| Phase 6: FOL con Igualdad | Añadir predicado `=`. Reflexividad y Sustitución | 🔄 In progress |
+| Phase 6: FOL con Igualdad | Añadir predicado `=`. Reflexividad y Sustitución | ✅ Complete |
 
 > See [NEXT-STEPS.md](NEXT-STEPS.md) for detailed phase planning.
 
@@ -100,9 +101,8 @@ ProjectName/
 
 ## Next Steps
 
-1. Etiquetar la versión v1.0.0 (FOL puro) en Git.
-2. Crear la rama `feature/fol-igualdad`.
-3. Modificar `FOL.lean` para introducir `Formula.eq`.
+1. Demostrar teoremas derivados de la igualdad (ej. simetría y transitividad pura en `Derives`) en un nuevo módulo `Theorems/Eq.lean`.
+2. Refinar y congelar esta nueva rama como la versión FOL=.
 
 ---
 

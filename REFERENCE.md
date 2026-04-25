@@ -1,6 +1,6 @@
 # Technical Reference — ProjectName
 
-**Last updated:** 2026-04-25 21:30
+**Last updated:** 2026-04-25 22:30
 **Author**: Julián Calderón Almendros
 **Lean version**: v4.28.0
 
@@ -194,7 +194,7 @@ Provides the core syntax, substitution operations using De Bruijn indices, AST n
 **Definitions**:
 
 - `Term`: Inductive type for terms (variables via `#n` and functions).
-- `Formula`: Inductive type for formulas (`⊥`, `atom`, `⇒`, `∀.`).
+- `Formula`: Inductive type for formulas (`⊥`, `eq`, `atom`, `⇒`, `∀.`).
 - `neg`, `top`, `lor`, `land`, `iff`, `ex`: Derived logical connectives.
 - `liftTerm`, `liftTerms`, `liftFormula`: De Bruijn lifting.
 - `substTerm`, `substTerms`, `substFormula`: Substitution of De Bruijn indices.
@@ -202,12 +202,14 @@ Provides the core syntax, substitution operations using De Bruijn indices, AST n
 - `getAt?`, `replaceAt`: Operations to query and modify formulas at exact positions.
 - `LocalRule`: Allows localized rewrites (e.g., double negation elimination).
 - `Derives`: Inductive predicate `Γ ⊢ f` representing natural deduction derivations.
+  - Includes rules for equality: `eq_refl` and `eq_subst`.
 
 **Notations**:
 
 - `⊥` => `Formula.bottom`
 - `⊤` => `top`
 - `¬` => `neg`
+- ` ≐ ` => `Formula.eq`
 - ` ∧ ` => `land`
 - ` ∨ ` => `lor`
 - ` ⇒ ` => `Formula.impl`
@@ -432,6 +434,7 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 | `⊥` | `Formula.bottom` | `FOL.lean` | |
 | `⊤` | `top` | `FOL.lean` | |
 | `¬` | `neg` | `FOL.lean` | prefix |
+| ` ≐ ` | `Formula.eq` | `FOL.lean` | infix |
 | ` ∧ ` | `land` | `FOL.lean` | infixr |
 | ` ∨ ` | `lor` | `FOL.lean` | infixr |
 | ` ⇒ ` | `Formula.impl` | `FOL.lean` | infixr |

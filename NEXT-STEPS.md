@@ -1,6 +1,6 @@
 # Próximos Pasos — FOL
 
-**Última actualización:** 2026-04-25 21:30
+**Última actualización:** 2026-04-25 22:30
 **Autor**: Julián Calderón Almendros
 
 > Este archivo hace un seguimiento de las fases de desarrollo planificadas para el proyecto de Lógica de Primer Orden (FOL).
@@ -90,11 +90,10 @@
 **Objetivo**: Extender el lenguaje y el sistema deductivo para soportar el predicado de igualdad lógica (`=`).
 
 **Tareas**:
-
-- [ ] Modificar la sintaxis en `FOL.lean` añadiendo el constructor de igualdad a `Formula` (`eq : Term → Term → Formula`).
-- [ ] Añadir las reglas de inferencia para la igualdad (Reflexividad y Sustitución de Leibniz) en `Derives`.
-- [ ] Actualizar la semántica en `Semantics.lean` para que la igualdad sintáctica coincida con la igualdad semántica del modelo.
-- [ ] Adaptar las pruebas de Soundness y Completeness a la nueva sintaxis y reglas.
+- [x] Modificar la sintaxis en `FOL.lean` añadiendo el constructor de igualdad a `Formula` (`eq : Term → Term → Formula`).
+- [x] Añadir las reglas de inferencia para la igualdad (Reflexividad y Sustitución de Leibniz) en `Derives`.
+- [x] Actualizar la semántica en `Semantics.lean` para que la igualdad sintáctica coincida con la igualdad semántica del modelo.
+- [x] Adaptar las pruebas de Soundness y Completeness a la nueva sintaxis y reglas (usando dominios cociente).
 
 **Dependencias**: Fase 5 completada.
 **Complejidad**: Alta
@@ -110,4 +109,4 @@
 | 3 | Conectivos y Cuantificadores | ✅ Completo |
 | 4 | Automatización | ✅ Completo |
 | 5 | Metamatemática | ✅ Completo |
-| 6 | FOL con Igualdad | 🔄 En progreso |
+| 6 | FOL con Igualdad | ✅ Completo |

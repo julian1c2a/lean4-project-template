@@ -10,6 +10,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added (2026-04-25 22:30)
+
+- Completada exitosamente la Fase 6 (FOL con Igualdad).
+- Extensión de la sintaxis con el constructor `Formula.eq` (notación `≐`) en `FOL.lean`.
+- Adición de las reglas de deducción natural para la igualdad (`eq_refl`, `eq_subst`) en `Derives`.
+- Actualización de la semántica en `Semantics.lean` para evaluar la igualdad.
+- Refactorización del Modelo Canónico de Henkin en `Completeness.lean` para operar sobre un espacio cociente (`Quotient`) generado por la relación de equivalencia sintáctica.
+- Teoremas de Corrección y Completitud adaptados y demostrados para FOL=.
+
 ### Added (2026-04-25 22:00)
 
 - El proyecto base de Lógica de Primer Orden (FOL) se congela en su versión 1.0.0.
