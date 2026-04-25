@@ -15,3 +15,4 @@ import FOL.Theorems.Derived
 import FOL.Theorems.Impl
 import FOL.Theorems.Neg
 import FOL.Theorems.Quantifiers
+import FOL.Theorems.Eq
