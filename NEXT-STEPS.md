@@ -1,6 +1,6 @@
 # Próximos Pasos — FOL
 
-**Última actualización:** 2026-04-25 22:30
+**Última actualización:** 2026-04-25 23:00
 **Autor**: Julián Calderón Almendros
 
 > Este archivo hace un seguimiento de las fases de desarrollo planificadas para el proyecto de Lógica de Primer Orden (FOL).

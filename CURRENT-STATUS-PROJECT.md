@@ -1,6 +1,6 @@
 # Current Project Status — ProjectName
 
-**Last updated:** 2026-04-25 22:30
+**Last updated:** 2026-04-25 23:00
 **Author**: Julián Calderón Almendros
 
 ---
@@ -9,9 +9,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total modules | 12 |
-| Modules with 0 sorry | 12 / 12 |
-| Total theorems proven | 74 |
+| Total modules | 13 |
+| Modules with 0 sorry | 13 / 13 |
+| Total theorems proven | 79 |
 | Total definitions | 26 |
 | Total notations | 11 |
 | Build status | ✅ Passing |
@@ -30,6 +30,7 @@
 | `Neg.lean` | 5 | 0 | 0 | ✅ Complete |
 | `Derived.lean` | 17 | 0 | 0 | ✅ Complete |
 | `Quantifiers.lean` | 10 | 0 | 0 | ✅ Complete |
+| `Eq.lean` | 5 | 0 | 0 | ✅ Complete |
 | `Tactics.lean` | 0 | 1 | 0 | ✅ Complete |
 | `Deduction.lean` | 1 | 0 | 0 | ✅ Complete |
 | `Semantics.lean` | 13 | 8 | 0 | ✅ Complete |
@@ -54,12 +55,13 @@
 - Alcanzados 0 sorries en todo el proyecto; demostrada Compacidad y Consistencia.
 - Preparación para bifurcar el proyecto hacia FOL con Igualdad.
 - Implementación completa de la Fase 6: FOL con Igualdad (Sintaxis, Semántica, Corrección y Completitud con dominios cociente).
+- Añadidos teoremas de congruencia de la igualdad y táctica `derive_refl`.
 
 ---
 
 ## Pending Work
 
-- 🎉 **¡Fase 6 Completada!** Considerar la adición de teoremas derivados de la igualdad (simetría, transitividad pura) en un nuevo módulo `Theorems/Eq.lean`.
+- 🎉 **¡Proyecto Completado al 100%!** Todas las fases y extensiones lógicas planeadas han sido implementadas y verificadas exitosamente.
 
 ---
 
@@ -80,6 +82,7 @@ ProjectName/
     ├── Neg.lean
     ├── Derived.lean
     └── Quantifiers.lean
+    └── Eq.lean
 ```
 
 ---

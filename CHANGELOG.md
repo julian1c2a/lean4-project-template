@@ -10,6 +10,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added (2026-04-25 23:00)
+
+- Añadido `eq_subst_iff` en `Theorems/Eq.lean` para equivalencia bidireccional bajo sustitución.
+- Añadida la táctica `derive_refl` en `Tactics.lean` para automatizar la reflexividad de la igualdad.
+- Proyección completa de los teoremas de congruencia de la igualdad en la documentación.
+- Reescritura completa del `README.md` detallando la envergadura y características de FOL=.
+
 ### Added (2026-04-25 22:30)
 
 - Completada exitosamente la Fase 6 (FOL con Igualdad).

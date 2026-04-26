@@ -1,6 +1,6 @@
 # Technical Reference — ProjectName
 
-**Last updated:** 2026-04-25 22:30
+**Last updated:** 2026-04-25 23:00
 **Author**: Julián Calderón Almendros
 **Lean version**: v4.28.0
 
@@ -94,12 +94,11 @@ This document complies with all requirements specified in [AI-GUIDE.md](AI-GUIDE
 | `Theorems/Neg.lean` | `FOL.Theorems.Neg` | `FOL.FOL`, `FOL.Prelim` | ✅ Completo |
 | `Theorems/Derived.lean` | `FOL.Theorems.Derived`| `FOL.FOL`, `FOL.Prelim` | ✅ Completo |
 | `Theorems/Quantifiers.lean` | `FOL.Theorems.Quantifiers`| `FOL.FOL`, `FOL.Theorems.Impl`, `FOL.Theorems.Neg`, `FOL.Theorems.Derived` | ✅ Completo |
+| `Theorems/Eq.lean` | `FOL.Theorems.Eq` | `FOL.FOL`, `FOL.Tactics` | ✅ Completo |
 | `Tactics.lean` | `FOL.Tactics` | `FOL.FOL`, `Lean` | ✅ Completo |
 | `Deduction.lean` | `FOL.Metamath.Deduction` | `FOL.FOL`, `FOL.Tactics` | ✅ Completo |
 | `Semantics.lean` | `FOL.Metamath.Semantics` | `FOL.FOL` | ✅ Completo |
 | `Soundness.lean` | `FOL.Metamath.Soundness` | `FOL.FOL`, `FOL.Metamath.Semantics`, `FOL.Tactics` | ✅ Completo |
-| `Completeness.lean` | `FOL.Metamath.Completeness` | `FOL.FOL`, `FOL.Semantics`, `FOL.Deduction`, `FOL.Theorems.Neg`, `FOL.Theorems.Quantifiers` | ✅ Completo |
-| `Compacity.lean` | `FOL.Metamath.Compacity` | `FOL.FOL`, `FOL.Semantics`, `FOL.Soundness`, `FOL.Completeness` | ✅ Completo |
 
 *Status codes*: ✅ Complete · 🧊 Frozen · 🔶 Partial · 🔄 In progress · ❌ Pending
 
@@ -120,20 +119,14 @@ graph TD
     N --> Q
     D --> Q
     F --> Q
+    F --> Eq[Theorems/Eq.lean]
+    T --> Eq
     F --> T[Tactics.lean]
     F --> Ded[Deduction.lean]
     T --> Ded
     F --> Sem[Semantics.lean]
     Sem --> S[Soundness.lean]
     F --> S
-    Sem --> C[Completeness.lean]
-    Ded --> C
-    N --> C
-    Q --> C
-    F --> C
-    C --> Comp[Compacity.lean]
-    S --> Comp
-    Sem --> Comp
 ```
 
 *(Update this diagram as modules are added)*
@@ -194,7 +187,7 @@ Provides the core syntax, substitution operations using De Bruijn indices, AST n
 **Definitions**:
 
 - `Term`: Inductive type for terms (variables via `#n` and functions).
-- `Formula`: Inductive type for formulas (`⊥`, `eq`, `atom`, `⇒`, `∀.`).
+- `Formula`: Inductive type for formulas (`⊥`, `atom`, `⇒`, `∀.`).
 - `neg`, `top`, `lor`, `land`, `iff`, `ex`: Derived logical connectives.
 - `liftTerm`, `liftTerms`, `liftFormula`: De Bruijn lifting.
 - `substTerm`, `substTerms`, `substFormula`: Substitution of De Bruijn indices.
@@ -202,14 +195,12 @@ Provides the core syntax, substitution operations using De Bruijn indices, AST n
 - `getAt?`, `replaceAt`: Operations to query and modify formulas at exact positions.
 - `LocalRule`: Allows localized rewrites (e.g., double negation elimination).
 - `Derives`: Inductive predicate `Γ ⊢ f` representing natural deduction derivations.
-  - Includes rules for equality: `eq_refl` and `eq_subst`.
 
 **Notations**:
 
 - `⊥` => `Formula.bottom`
 - `⊤` => `top`
 - `¬` => `neg`
-- ` ≐ ` => `Formula.eq`
 - ` ∧ ` => `land`
 - ` ∨ ` => `lor`
 - ` ⇒ ` => `Formula.impl`
@@ -346,14 +337,13 @@ Quantifier interactions and dualities.
 Metaprogramming and macros to automate repetitive natural deduction tasks.
 
 **Tactics**:
-
 - `derive_hyp`: Closes goals of the form `Γ ⊢ f` if `f ∈ Γ` via `Derives.hyp` and `List.Mem` resolution.
 - `derive_rewrite rule at pos`: Automates the application of a local rewrite rule `LocalRule` at a specific AST position using `Derives.rewrite_at`.
 - `derive_weaken thm`: Automatically weakens a theorem `thm`'s context to the current goal's context by resolving `List.Subset` goals automatically.
 - `derive_raa`: Applies the Reductio ad Absurdum (`Derives.raa`) rule to change a goal `Γ ⊢ A` into `Γ, ¬A ⊢ ⊥`.
+- `derive_refl`: Closes equality goals `Γ ⊢ t ≐ t` using `Derives.eq_refl`.
 
 **Definitions**:
-
 - `getAllPositions`: Extracts all valid path positions (`List Pos`) from a given `Formula`.
 - `tryMem`: MetaM tactic to prove list membership automatically.
 
@@ -369,7 +359,6 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 **@importance**: `high`
 
 **Theorems**:
-
 - `deduction_theorem`: $(A :: \Gamma \vdash B) \Rightarrow (\Gamma \vdash A \Rightarrow B)$
   `theorem deduction_theorem {Γ A B} (h : A :: Γ ⊢ B) : Γ ⊢ .impl A B`
 
@@ -385,7 +374,6 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 **@importance**: `high`
 
 **Definitions**:
-
 - `Model`: Evaluates logic terms and predicates. `structure Model (D : Type)`
 - `evalTerm`: Evaluates a `Term` into the model's domain.
 - `evalTerms`: Evaluates a list of terms.
@@ -396,7 +384,6 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 - `satisfies`: $Γ \models f$. `def satisfies (Γ : List Formula) (f : Formula) : Prop`
 
 **Theorems**:
-
 - Substitution & Lifting generalizations: `eval_liftTerm_ext`, `eval_liftTerms_ext`, `eval_substTerm_ext`, `eval_substTerms_ext`, `eval_liftFormula_ext`, `eval_substFormula_ext`.
 - Base Semantics Lemmas: `updateEnv_zero`, `shiftEnv_updateEnv_comm`, `eval_liftFormula_zero`, `eval_substFormula_zero`, `contextSatisfies_lift_zero`.
 - Rewrite Correctness: `rule_soundness`, `replaceAt_soundness`.
@@ -413,9 +400,26 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 **@importance**: `high`
 
 **Theorems**:
-
 - `soundness`: Si $\Gamma \vdash f$, entonces $\Gamma \models f$.
   `theorem soundness {Γ f} (h : Γ ⊢ f) : Γ ⊨ f`
+
+---
+
+### 3.13 Theorems/Eq.lean
+
+**Namespace**: `FOL.Theorems.Eq`
+**Dependencies**: `FOL.FOL`, `FOL.Tactics`
+**Last updated**: 2026-04-25 23:00
+**Status**: ✅ Completo
+**@axiom_system**: `none`
+**@importance**: `high`
+
+**Theorems**:
+- `eq_symm`: $t_1 \doteq t_2 \vdash t_2 \doteq t_1$
+- `eq_trans`: $t_1 \doteq t_2, t_2 \doteq t_3 \vdash t_1 \doteq t_3$
+- `eq_func`: $t_1 \doteq t_2 \vdash f(\dots, t_1, \dots) \doteq f(\dots, t_2, \dots)$
+- `eq_atom`: $t_1 \doteq t_2, P(\dots, t_1, \dots) \vdash P(\dots, t_2, \dots)$
+- `eq_subst_iff`: $t_1 \doteq t_2 \vdash A(t_1) \Leftrightarrow A(t_2)$
 
 ---
 
@@ -434,7 +438,6 @@ Metaprogramming and macros to automate repetitive natural deduction tasks.
 | `⊥` | `Formula.bottom` | `FOL.lean` | |
 | `⊤` | `top` | `FOL.lean` | |
 | `¬` | `neg` | `FOL.lean` | prefix |
-| ` ≐ ` | `Formula.eq` | `FOL.lean` | infix |
 | ` ∧ ` | `land` | `FOL.lean` | infixr |
 | ` ∨ ` | `lor` | `FOL.lean` | infixr |
 | ` ⇒ ` | `Formula.impl` | `FOL.lean` | infixr |
@@ -504,7 +507,12 @@ Exports from namespace `FOL.Theorems.Quantifiers`:
 ### 6.7 Tactics.lean
 
 Metaprogramming macros globally registered into the environment:
-`derive_hyp`, `derive_rewrite`, `derive_weaken`, `derive_raa`, `getAllPositions`, `tryMem`.
+`derive_hyp`, `derive_rewrite`, `derive_weaken`, `derive_raa`, `derive_refl`, `getAllPositions`, `tryMem`.
+
+### 6.13 Theorems/Eq.lean
+
+Exports from namespace `FOL.Theorems.Eq`:
+`eq_symm`, `eq_trans`, `eq_func`, `eq_atom`, `eq_subst_iff`.
 
 ### 6.8 Deduction.lean
 
