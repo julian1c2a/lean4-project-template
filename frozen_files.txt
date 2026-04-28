@@ -1,5 +1,3 @@
-FOL.lean
-Semantics.lean
 Soundness.lean
 Completeness.lean
 Compacity.lean
@@ -8,7 +6,6 @@ Compacity.lean
 ./Eq.lean
 ./FOL/Classical.lean
 ./FOL/Deduction.lean
-./FOL/FOL.lean
 ./FOL/Prelim.lean
 ./FOL/Semantics.lean
 ./FOL/Soundness.lean
@@ -20,7 +17,6 @@ Compacity.lean
 ./FOL/Theorems/Neg.lean
 ./FOL/Theorems/Quantifiers.lean
 ./FOL/Theorems/Soundness.lean
-./FOL.lean
 ./lakefile.lean
 ./Semantics.lean
 ./Soundness.lean

@@ -13,9 +13,9 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Tactics
+import FOL.Tactics.Basic
 
-namespace FOL.Theorems.Impl
+namespace FOL.Theorems.Prop.Impl
 
 -- ============================================================
 -- Nivel 1: Tautologías de Implicación
@@ -64,9 +64,9 @@ theorem s_impl {Γ A B C} : Γ ⊢ .impl (.impl A (.impl B C)) (.impl (.impl A B
     · apply Derives.hyp
       exact List.Mem.head _
 
-end FOL.Theorems.Impl
+end FOL.Theorems.Prop.Impl
 
-export FOL.Theorems.Impl (
+export FOL.Theorems.Prop.Impl (
   id_impl
   k_impl
   s_impl

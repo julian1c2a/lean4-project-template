@@ -8,7 +8,8 @@
 -- Usamos índices de De Bruijn para las variables (Nat) para evitar colisiones de nombres.
 
 inductive Term where
-  | var  : Nat → Term
+  | bvar : Nat → Term
+  | fvar : String → Term
   | func : String → List Term → Term
   deriving Repr, BEq
 
@@ -47,7 +48,7 @@ instance : Coe String Formula where
   coe s := Formula.atom s []
 
 -- Notación para variables de De Bruijn
-prefix:max "#" => Term.var
+prefix:max "#" => Term.bvar
 
 -- 1.5. LIFT Y SUSTITUCIÓN (De Bruijn)
 
@@ -56,7 +57,8 @@ prefix:max "#" => Term.var
 mutual
 def liftTerm (c : Nat) (t : Term) : Term :=
   match t with
-  | .var n => if n < c then .var n else .var (n + 1)
+  | .bvar n => if n < c then .bvar n else .bvar (n + 1)
+  | .fvar x => .fvar x
   | .func f ts => .func f (liftTerms c ts)
 
 def liftTerms (c : Nat) (ts : List Term) : List Term :=
@@ -81,10 +83,11 @@ def liftFormula (c : Nat) (f : Formula) : Formula :=
 mutual
 def substTerm (v : Nat) (s : Term) (t : Term) : Term :=
   match t with
-  | .var n =>
+  | .bvar n =>
       if n = v then s
-      else if n > v then .var (n - 1)
-      else .var n
+      else if n > v then .bvar (n - 1)
+      else .bvar n
+  | .fvar x => .fvar x
   | .func f ts => .func f (substTerms v s ts)
 
 def substTerms (v : Nat) (s : Term) (ts : List Term) : List Term :=

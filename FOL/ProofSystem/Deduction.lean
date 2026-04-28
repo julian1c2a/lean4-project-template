@@ -13,7 +13,7 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Tactics
+import FOL.Tactics.Basic
 
 namespace FOL.Metamath.Deduction
 

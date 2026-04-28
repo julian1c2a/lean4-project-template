@@ -13,9 +13,9 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Tactics
+import FOL.Tactics.Basic
 
-namespace FOL.Theorems.Eq
+namespace FOL.Theorems.FOL.Eq
 
 -- ============================================================
 -- Teoremas Derivados de la Igualdad
@@ -23,24 +23,30 @@ namespace FOL.Theorems.Eq
 
 -- Lemas de sintaxis auxiliar (protección de términos al sustituir)
 mutual
-lemma subst_lift_term_cancel (t : Term) (s : Term) (v : Nat) :
+def subst_lift_term_cancel (t : Term) (s : Term) (v : Nat) :
     substTerm v s (liftTerm v t) = t := by
   match t with
-  | .var n =>
-    dsimp [liftTerm, substTerm]
+  | .bvar n =>
+    dsimp [liftTerm]
     split
-    · rename_i h; simp [h]
     · rename_i h
+      unfold substTerm
+      have h1 : ¬(n = v) := by omega
+      have h2 : ¬(n > v) := by omega
+      simp [h1, h2]
+    · rename_i h
+      unfold substTerm
       have h1 : ¬(n + 1 = v) := by omega
       have h2 : n + 1 > v := by omega
       have h3 : n + 1 - 1 = n := by omega
       simp [h1, h2, h3]
+  | .fvar x => rfl
   | .func f ts =>
     dsimp [liftTerm, substTerm]
     congr 1
     exact subst_lift_terms_cancel ts s v
 
-lemma subst_lift_terms_cancel (ts : List Term) (s : Term) (v : Nat) :
+def subst_lift_terms_cancel (ts : List Term) (s : Term) (v : Nat) :
     substTerms v s (liftTerms v ts) = ts := by
   match ts with
   | [] => rfl
@@ -51,15 +57,15 @@ lemma subst_lift_terms_cancel (ts : List Term) (s : Term) (v : Nat) :
     · exact subst_lift_terms_cancel ts' s v
 end
 
-lemma substTerms_append (v : Nat) (s : Term) (ts1 ts2 : List Term) :
+theorem substTerms_append (v : Nat) (s : Term) (ts1 ts2 : List Term) :
     substTerms v s (ts1 ++ ts2) = substTerms v s ts1 ++ substTerms v s ts2 := by
   induction ts1 with
   | nil => rfl
-  | cons t ts ih => simp only [List.append_eq, substTerms, ih, List.cons_append]
+  | cons t ts ih => simp only [substTerms, ih, List.cons_append]
 
 -- Simetría de la igualdad: t1 = t2 ⊢ t2 = t1
 theorem eq_symm {Γ : List Formula} {t1 t2 : Term} (h : Γ ⊢ .eq t1 t2) : Γ ⊢ .eq t2 t1 := by
-  let A := Formula.eq (.var 0) (liftTerm 0 t1)
+  let A := Formula.eq (.bvar 0) (liftTerm 0 t1)
   have hSubst1 : substFormula 0 t1 A = .eq t1 t1 := by
     dsimp [A, substFormula, substTerm]
     rw [subst_lift_term_cancel]
@@ -75,7 +81,7 @@ theorem eq_symm {Γ : List Formula} {t1 t2 : Term} (h : Γ ⊢ .eq t1 t2) : Γ �
 -- Transitividad de la igualdad: t1 = t2, t2 = t3 ⊢ t1 = t3
 theorem eq_trans {Γ : List Formula} {t1 t2 t3 : Term}
     (h12 : Γ ⊢ .eq t1 t2) (h23 : Γ ⊢ .eq t2 t3) : Γ ⊢ .eq t1 t3 := by
-  let A := Formula.eq (liftTerm 0 t1) (.var 0)
+  let A := Formula.eq (liftTerm 0 t1) (.bvar 0)
   have hSubst2 : substFormula 0 t2 A = .eq t1 t2 := by
     dsimp [A, substFormula, substTerm]
     rw [subst_lift_term_cancel]
@@ -91,15 +97,15 @@ theorem eq_trans {Γ : List Formula} {t1 t2 t3 : Term}
 theorem eq_func {Γ : List Formula} {f : String} {pre post : List Term} {t1 t2 : Term}
     (hEq : Γ ⊢ .eq t1 t2) : Γ ⊢ .eq (.func f (pre ++ t1 :: post)) (.func f (pre ++ t2 :: post)) := by
   let A := Formula.eq (.func f (liftTerms 0 pre ++ liftTerm 0 t1 :: liftTerms 0 post))
-                      (.func f (liftTerms 0 pre ++ .var 0 :: liftTerms 0 post))
+                      (.func f (liftTerms 0 pre ++ .bvar 0 :: liftTerms 0 post))
   have hSubst1 : substFormula 0 t1 A = .eq (.func f (pre ++ t1 :: post)) (.func f (pre ++ t1 :: post)) := by
     dsimp [A, substFormula, substTerm]
     rw [substTerms_append, substTerms_append]
-    simp [subst_lift_terms_cancel, subst_lift_term_cancel]
+    simp [substTerms, substTerm, subst_lift_terms_cancel, subst_lift_term_cancel]
   have hSubst2 : substFormula 0 t2 A = .eq (.func f (pre ++ t1 :: post)) (.func f (pre ++ t2 :: post)) := by
     dsimp [A, substFormula, substTerm]
     rw [substTerms_append, substTerms_append]
-    simp [subst_lift_terms_cancel, subst_lift_term_cancel]
+    simp [substTerms, substTerm, subst_lift_terms_cancel, subst_lift_term_cancel]
   have hRefl := Derives.eq_refl Γ (.func f (pre ++ t1 :: post))
   rw [← hSubst1] at hRefl
   have hDer := Derives.eq_subst Γ A t1 t2 hEq hRefl
@@ -109,20 +115,20 @@ theorem eq_func {Γ : List Formula} {f : String} {pre post : List Term} {t1 t2 :
 -- Congruencia de predicados (átomos): t1 = t2, P(..., t1, ...) ⊢ P(..., t2, ...)
 theorem eq_atom {Γ : List Formula} {p : String} {pre post : List Term} {t1 t2 : Term}
     (hEq : Γ ⊢ .eq t1 t2) (hAtom : Γ ⊢ .atom p (pre ++ t1 :: post)) : Γ ⊢ .atom p (pre ++ t2 :: post) := by
-  let A := Formula.atom p (liftTerms 0 pre ++ .var 0 :: liftTerms 0 post)
+  let A := Formula.atom p (liftTerms 0 pre ++ .bvar 0 :: liftTerms 0 post)
   have hSubst1 : substFormula 0 t1 A = .atom p (pre ++ t1 :: post) := by
     dsimp [A, substFormula, substTerm]
     rw [substTerms_append]
-    simp [subst_lift_terms_cancel, subst_lift_term_cancel]
+    simp [substTerms, substTerm, subst_lift_terms_cancel]
   have hSubst2 : substFormula 0 t2 A = .atom p (pre ++ t2 :: post) := by
     dsimp [A, substFormula, substTerm]
     rw [substTerms_append]
-    simp [subst_lift_terms_cancel, subst_lift_term_cancel]
+    simp [substTerms, substTerm, subst_lift_terms_cancel]
   rw [← hSubst1] at hAtom
   have hDer := Derives.eq_subst Γ A t1 t2 hEq hAtom
   rw [hSubst2] at hDer
   exact hDer
 
-end FOL.Theorems.Eq
+end FOL.Theorems.FOL.Eq
 
-export FOL.Theorems.Eq (eq_symm eq_trans eq_func eq_atom)
+export FOL.Theorems.FOL.Eq (eq_symm eq_trans eq_func eq_atom)

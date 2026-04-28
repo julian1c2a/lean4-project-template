@@ -14,7 +14,7 @@ License: MIT
 
 import FOL.FOL
 
-namespace FOL.Theorems.Neg
+namespace FOL.Theorems.Prop.Neg
 
 -- ============================================================
 -- Nivel 2: Propiedades de la Negación
@@ -82,9 +82,9 @@ theorem contrapositive_2 {Γ A B} (h_dne : .impl (neg (neg B)) B ∈ Γ) : Γ �
     · apply Derives.hyp
       exact List.Mem.tail _ (List.Mem.head _)
 
-end FOL.Theorems.Neg
+end FOL.Theorems.Prop.Neg
 
-export FOL.Theorems.Neg (
+export FOL.Theorems.Prop.Neg (
   explosion_impl
   derived_raa
   double_neg_intro

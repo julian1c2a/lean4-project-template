@@ -13,9 +13,9 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Semantics
-import FOL.Soundness
-import FOL.Completeness
+import FOL.Semantics.Basic
+import FOL.MetaTheory.Soundness
+import FOL.MetaTheory.Completeness
 
 namespace FOL.Metamath.Compacity
 

@@ -1,18 +1,8 @@
-/-
-Copyright (c) 2026. All rights reserved.
-Author: Julián Calderón Almendros
-License: MIT
--/
+﻿import subprocess
+import sys
 
--- REFERENCE.md: project this file after every modification.
--- See AI-GUIDE.md §12 for the "proyectar" protocol.
--- See NAMING-CONVENTIONS.md for naming rules.
---
--- Dependencies: FOL.FOL
--- @axiom_system: classical
--- @importance: high
-
-import FOL.FOL
+content = """import FOL.FOL
+import FOL.Tactics
 
 namespace FOL.Metamath.Semantics
 
@@ -51,9 +41,15 @@ theorem updateEnv_zero {D : Type} (v : Nat → D) (d : D) (n : Nat) :
     updateEnv 0 v d n = shiftEnv v d n := by
   cases n <;> simp [updateEnv, shiftEnv]
 
+theorem updateEnv_zero_eq {D : Type} (v : Nat → D) (d : D) :
+    updateEnv 0 v d = shiftEnv v d := by
+  funext n
+  exact updateEnv_zero v d n
+
 def evalFormula {D : Type} (M : Model D) (v : Nat → D) (f : Formula) : Prop :=
   match f with
   | .bottom => False
+  | .eq t1 t2 => evalTerm M v t1 = evalTerm M v t2
   | .atom p ts => M.rel p (evalTerms M v ts)
   | .impl f1 f2 => evalFormula M v f1 → evalFormula M v f2
   | .forall f1 => ∀ (d : D), evalFormula M (shiftEnv v d) f1
@@ -78,29 +74,24 @@ theorem eval_liftTerm_ext {D : Type} (M : Model D) (v : Nat → D) (d : D) (c : 
     evalTerm M (updateEnv c v d) (liftTerm c t) = evalTerm M v t := by
   match t with
   | .var n =>
-    unfold liftTerm evalTerm updateEnv
-    split
-    · rename_i h
-      simp [h]
-    · rename_i h
-      have h1 : ¬(n + 1 < c) := by omega
+    by_cases h : n < c
+    · simp [liftTerm, evalTerm, updateEnv, h]
+    · have h1 : ¬(n + 1 < c) := by omega
       have h2 : ¬(n + 1 = c) := by omega
       have h3 : n + 1 - 1 = n := by omega
-      simp [h, h1, h2, h3]
+      simp [liftTerm, evalTerm, updateEnv, h, h1, h2, h3]
   | .func f ts =>
-    unfold liftTerm evalTerm
     have ih := eval_liftTerms_ext M v d c ts
-    rw [ih]
+    simp [liftTerm, evalTerm, ih]
 
 theorem eval_liftTerms_ext {D : Type} (M : Model D) (v : Nat → D) (d : D) (c : Nat) (ts : List Term) :
     evalTerms M (updateEnv c v d) (liftTerms c ts) = evalTerms M v ts := by
   match ts with
   | [] => rfl
   | t :: ts' =>
-    unfold liftTerms evalTerms
     have ih1 := eval_liftTerm_ext M v d c t
     have ih2 := eval_liftTerms_ext M v d c ts'
-    rw [ih1, ih2]
+    simp [liftTerms, evalTerms, ih1, ih2]
 end
 
 mutual
@@ -108,34 +99,25 @@ theorem eval_substTerm_ext {D : Type} (M : Model D) (v : Nat → D) (s : Term) (
     evalTerm M v (substTerm c s t) = evalTerm M (updateEnv c v (evalTerm M v s)) t := by
   match t with
   | .var n =>
-    unfold substTerm evalTerm updateEnv
-    split
-    · rename_i h
-      have h1 : ¬(n < c) := by omega
-      simp [h, h1]
-    · rename_i h
-      split
-      · rename_i h2
-        have h3 : ¬(n < c) := by omega
-        have h4 : ¬(n = c) := by omega
-        simp [h3, h4]
-      · rename_i h2
-        have h3 : n < c := by omega
-        simp [h3]
+    by_cases h1 : n = c
+    · simp [substTerm, evalTerm, updateEnv, h1]
+    · by_cases h3 : n < c
+      · have h4 : ¬(n > c) := by omega
+        simp [substTerm, evalTerm, updateEnv, h1, h3, h4]
+      · have h4 : n > c := by omega
+        simp [substTerm, evalTerm, updateEnv, h1, h3, h4]
   | .func f ts =>
-    unfold substTerm evalTerm
     have ih := eval_substTerms_ext M v s c ts
-    rw [ih]
+    simp [substTerm, evalTerm, ih]
 
 theorem eval_substTerms_ext {D : Type} (M : Model D) (v : Nat → D) (s : Term) (c : Nat) (ts : List Term) :
     evalTerms M v (substTerms c s ts) = evalTerms M (updateEnv c v (evalTerm M v s)) ts := by
   match ts with
   | [] => rfl
   | t :: ts' =>
-    unfold substTerms evalTerms
     have ih1 := eval_substTerm_ext M v s c t
     have ih2 := eval_substTerms_ext M v s c ts'
-    rw [ih1, ih2]
+    simp [substTerms, evalTerms, ih1, ih2]
 end
 
 -- 2. Lemas generalizados para Fórmulas (Firmas)
@@ -156,11 +138,21 @@ theorem shiftEnv_updateEnv_comm {D : Type} (v : Nat → D) (c : Nat) (d d' : D) 
       · rename_i h2
         have h3 : ¬(n' < c) := by omega
         have h4 : n' = c := by omega
-        simp [h3, h4]
+        cases n' with
+        | zero => omega
+        | succ n'' =>
+          dsimp [updateEnv]
+          have h5 : n'' + 1 - 1 = n'' := by omega
+          simp [h3, h4, h5]
       · rename_i h2
         have h3 : ¬(n' < c) := by omega
         have h4 : ¬(n' = c) := by omega
-        simp [h3, h4]
+        cases n' with
+        | zero => omega
+        | succ n'' =>
+          dsimp [updateEnv]
+          have h5 : n'' + 1 - 1 = n'' := by omega
+          simp [h3, h4, h5]
 
 theorem eval_liftFormula_ext {D : Type} (M : Model D) (v : Nat → D) (d : D) (c : Nat) (f : Formula) :
     evalFormula M (updateEnv c v d) (liftFormula c f) ↔ evalFormula M v f := by
@@ -176,32 +168,33 @@ theorem eval_liftFormula_ext {D : Type} (M : Model D) (v : Nat → D) (d : D) (c
     simp only [evalFormula, liftFormula, ih1, ih2]
   | or f1 f2 ih1 ih2 =>
     simp only [evalFormula, liftFormula, ih1, ih2]
-  | forall f1 ih =>
+  | «forall» f1 ih =>
     simp only [evalFormula, liftFormula]
     apply Iff.intro
     · intro h d'
       have h1 := h d'
-      rw [← shiftEnv_updateEnv_comm]
+      rw [shiftEnv_updateEnv_comm] at h1
       exact (ih (shiftEnv v d') (c + 1)).mp h1
     · intro h d'
-      have h1 := h d'
-      rw [shiftEnv_updateEnv_comm]
-      exact (ih (shiftEnv v d') (c + 1)).mpr h1
+      have h1 := (ih (shiftEnv v d') (c + 1)).mpr (h d')
+      rw [← shiftEnv_updateEnv_comm] at h1
+      exact h1
   | ex f1 ih =>
     simp only [evalFormula, liftFormula]
     apply Iff.intro
     · intro ⟨d', hd'⟩
-      use d'
-      rw [← shiftEnv_updateEnv_comm]
+      apply Exists.intro d'
+      rw [shiftEnv_updateEnv_comm] at hd'
       exact (ih (shiftEnv v d') (c + 1)).mp hd'
     · intro ⟨d', hd'⟩
-      use d'
-      rw [shiftEnv_updateEnv_comm]
-      exact (ih (shiftEnv v d') (c + 1)).mpr hd'
+      apply Exists.intro d'
+      have hd'' := (ih (shiftEnv v d') (c + 1)).mpr hd'
+      rw [← shiftEnv_updateEnv_comm] at hd''
+      exact hd''
 
 theorem eval_substFormula_ext {D : Type} (M : Model D) (v : Nat → D) (t : Term) (c : Nat) (f : Formula) :
     evalFormula M v (substFormula c t f) ↔ evalFormula M (updateEnv c v (evalTerm M v t)) f := by
-  induction f generalizing c v with
+  induction f generalizing c v t with
   | bottom => rfl
   | eq t1 t2 =>
     simp only [evalFormula, substFormula, eval_substTerm_ext]
@@ -213,57 +206,58 @@ theorem eval_substFormula_ext {D : Type} (M : Model D) (v : Nat → D) (t : Term
     simp only [evalFormula, substFormula, ih1, ih2]
   | or f1 f2 ih1 ih2 =>
     simp only [evalFormula, substFormula, ih1, ih2]
-  | forall f1 ih =>
+  | «forall» f1 ih =>
     simp only [evalFormula, substFormula]
     apply Iff.intro
     · intro h d'
       have hd' := h d'
       have hLift : evalTerm M (shiftEnv v d') (liftTerm 0 t) = evalTerm M v t := by
         have h0 := eval_liftTerm_ext M v d' 0 t
-        rw [updateEnv_zero] at h0
+        rw [updateEnv_zero_eq] at h0
         exact h0
-      rw [hLift, shiftEnv_updateEnv_comm]
+      rw [hLift, shiftEnv_updateEnv_comm] at hd'
       exact (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mp hd'
     · intro h d'
-      have hd' := h d'
+      have hd' := (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mpr (h d')
       have hLift : evalTerm M (shiftEnv v d') (liftTerm 0 t) = evalTerm M v t := by
         have h0 := eval_liftTerm_ext M v d' 0 t
-        rw [updateEnv_zero] at h0
+        rw [updateEnv_zero_eq] at h0
         exact h0
-      rw [← hLift, ← shiftEnv_updateEnv_comm]
-      exact (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mpr hd'
+      rw [← hLift, ← shiftEnv_updateEnv_comm] at hd'
+      exact hd'
   | ex f1 ih =>
     simp only [evalFormula, substFormula]
     apply Iff.intro
     · intro ⟨d', hd'⟩
-      use d'
+      apply Exists.intro d'
       have hLift : evalTerm M (shiftEnv v d') (liftTerm 0 t) = evalTerm M v t := by
         have h0 := eval_liftTerm_ext M v d' 0 t
-        rw [updateEnv_zero] at h0
+        rw [updateEnv_zero_eq] at h0
         exact h0
-      rw [hLift, shiftEnv_updateEnv_comm]
+      rw [hLift, shiftEnv_updateEnv_comm] at hd'
       exact (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mp hd'
     · intro ⟨d', hd'⟩
-      use d'
+      apply Exists.intro d'
+      have hd'' := (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mpr hd'
       have hLift : evalTerm M (shiftEnv v d') (liftTerm 0 t) = evalTerm M v t := by
         have h0 := eval_liftTerm_ext M v d' 0 t
-        rw [updateEnv_zero] at h0
+        rw [updateEnv_zero_eq] at h0
         exact h0
-      rw [← hLift, ← shiftEnv_updateEnv_comm]
-      exact (ih (shiftEnv v d') (liftTerm 0 t) (c + 1)).mpr hd'
+      rw [← hLift, ← shiftEnv_updateEnv_comm] at hd''
+      exact hd''
 
 @[simp]
 theorem eval_liftFormula_zero {D : Type} (M : Model D) (v : Nat → D) (d : D) (f : Formula) :
     evalFormula M (shiftEnv v d) (liftFormula 0 f) ↔ evalFormula M v f := by
   have h := eval_liftFormula_ext M v d 0 f
-  rw [updateEnv_zero] at h
+  rw [updateEnv_zero_eq] at h
   exact h
 
 @[simp]
 theorem eval_substFormula_zero {D : Type} (M : Model D) (v : Nat → D) (t : Term) (f : Formula) :
     evalFormula M v (substFormula 0 t f) ↔ evalFormula M (shiftEnv v (evalTerm M v t)) f := by
   have h := eval_substFormula_ext M v t 0 f
-  rw [updateEnv_zero] at h
+  rw [updateEnv_zero_eq] at h
   exact h
 
 theorem contextSatisfies_lift_zero {D : Type} (M : Model D) (v : Nat → D) (d : D) {Γ : List Formula} :
@@ -288,7 +282,9 @@ theorem rule_soundness {D : Type} (M : Model D) (v : Nat → D) {A B : Formula} 
     evalFormula M v A ↔ evalFormula M v B := by
   cases h
   simp only [evalFormula]
-  tauto
+  apply Iff.intro
+  · intro h1 h2 h3; exact h1 h3 h2
+  · intro h1 h2 h3; exact h1 h3 h2
 
 theorem replaceAt_soundness {D : Type} (M : Model D) (v : Nat → D) {f sub sub' : Formula} {p : Pos}
     (hGet : getAt? f p = some sub) (hEq : ∀ v', evalFormula M v' sub ↔ evalFormula M v' sub') :
@@ -301,22 +297,23 @@ theorem replaceAt_soundness {D : Type} (M : Model D) (v : Nat → D) {f sub sub'
     simp only [replaceAt]
     exact hEq v
   | left p' ih =>
-    cases f <;> simp only [getAt?, replaceAt, evalFormula] at hGet ⊢ <;> try contradiction
-    · have h := ih hGet v; tauto
-    · have h := ih hGet v; tauto
-    · have h := ih hGet v; tauto
+    cases f <;> simp only [getAt?, replaceAt, evalFormula] at hGet ⊢ <;> try contradiction <;> { have h := ih v hGet; simp [h] }
   | right p' ih =>
-    cases f <;> simp only [getAt?, replaceAt, evalFormula] at hGet ⊢ <;> try contradiction
-    · have h := ih hGet v; tauto
-    · have h := ih hGet v; tauto
-    · have h := ih hGet v; tauto
+    cases f <;> simp only [getAt?, replaceAt, evalFormula] at hGet ⊢ <;> try contradiction <;> { have h := ih v hGet; simp [h] }
   | body p' ih =>
     cases f <;> simp only [getAt?, replaceAt, evalFormula] at hGet ⊢ <;> try contradiction
     · apply Iff.intro
-      · intro h d; exact (ih hGet (shiftEnv v d)).mp (h d)
-      · intro h d; exact (ih hGet (shiftEnv v d)).mpr (h d)
+      · intro h d; exact (ih (shiftEnv v d) hGet).mp (h d)
+      · intro h d; exact (ih (shiftEnv v d) hGet).mpr (h d)
     · apply Iff.intro
-      · intro ⟨d, hd⟩; exact ⟨d, (ih hGet (shiftEnv v d)).mp hd⟩
-      · intro ⟨d, hd⟩; exact ⟨d, (ih hGet (shiftEnv v d)).mpr hd⟩
+      · intro ⟨d, hd⟩; apply Exists.intro d; exact (ih (shiftEnv v d) hGet).mp hd
+      · intro ⟨d, hd⟩; apply Exists.intro d; exact (ih (shiftEnv v d) hGet).mpr hd
 
-end FOL.Metamath.Semantics
+end FOL.Metamath.Semantics"""
+
+with open('FOL/Semantics.lean', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print('Semantics.lean updated correctly. Building...')
+result = subprocess.run(['lake', 'build'])
+sys.exit(result.returncode)

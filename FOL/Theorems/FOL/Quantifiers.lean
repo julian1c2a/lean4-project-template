@@ -5,11 +5,11 @@ License: MIT
 -/
 
 import FOL.FOL
-import FOL.Theorems.Impl
-import FOL.Theorems.Neg
+import FOL.Theorems.Prop.Impl
+import FOL.Theorems.Prop.Neg
 import FOL.Theorems.Derived
 
-namespace FOL.Theorems.Quantifiers
+namespace FOL.Theorems.FOL.Quantifiers
 
 -- ============================================================
 -- Nivel 4: Cuantificadores
@@ -27,9 +27,9 @@ theorem forall_dni {Γ A} : Γ ⊢ .impl (.forall A) (.forall (neg (neg A))) := 
   apply Derives.intro_impl
   apply Derives.intro_forall
   apply Derives.elim_impl (A := A)
-  · exact FOL.Theorems.Neg.double_neg_intro
+  · exact FOL.Theorems.Prop.Neg.double_neg_intro
   · have h : ((.forall A) :: Γ).map (liftFormula 0) ⊢ substFormula 0 (#0) (liftFormula 1 A) := by
-      apply Derives.elim_forall (A := liftFormula 1 A) (t := .var 0)
+      apply Derives.elim_forall (A := liftFormula 1 A) (t := .bvar 0)
       apply Derives.hyp
       exact List.Mem.head _
     rw [subst_lift_cancel_formula] at h
@@ -51,7 +51,7 @@ theorem exists_not_impl_forall_not {Γ A} : Γ ⊢ .impl (.ex (neg A)) (neg (.fo
         apply Derives.hyp
         exact mem_second
       have h_elim : ((neg A) :: ((.forall A) :: (.ex (neg A)) :: Γ).map (liftFormula 0)) ⊢ substFormula 0 (#0) (liftFormula 1 A) := by
-        apply Derives.elim_forall (A := liftFormula 1 A) (t := .var 0)
+        apply Derives.elim_forall (A := liftFormula 1 A) (t := .bvar 0)
         exact h_forall
       rw [subst_lift_cancel_formula] at h_elim
       exact h_elim
@@ -63,7 +63,7 @@ theorem forall_and_impl_and_forall {Γ A B} : Γ ⊢ .impl (.forall (.and A B)) 
   apply Derives.intro_and
   · apply Derives.intro_forall
     have h : ((.forall (.and A B)) :: Γ).map (liftFormula 0) ⊢ substFormula 0 (#0) (liftFormula 1 (.and A B)) := by
-      apply Derives.elim_forall (A := liftFormula 1 (.and A B)) (t := .var 0)
+      apply Derives.elim_forall (A := liftFormula 1 (.and A B)) (t := .bvar 0)
       apply Derives.hyp
       exact List.Mem.head _
     rw [subst_lift_cancel_formula] at h
@@ -71,7 +71,7 @@ theorem forall_and_impl_and_forall {Γ A B} : Γ ⊢ .impl (.forall (.and A B)) 
     exact h
   · apply Derives.intro_forall
     have h : ((.forall (.and A B)) :: Γ).map (liftFormula 0) ⊢ substFormula 0 (#0) (liftFormula 1 (.and A B)) := by
-      apply Derives.elim_forall (A := liftFormula 1 (.and A B)) (t := .var 0)
+      apply Derives.elim_forall (A := liftFormula 1 (.and A B)) (t := .bvar 0)
       apply Derives.hyp
       exact List.Mem.head _
     rw [subst_lift_cancel_formula] at h
@@ -90,7 +90,7 @@ theorem and_forall_impl_forall_and {Γ A B} : Γ ⊢ .impl (.and (.forall A) (.f
       apply Derives.elim_and_l (B := liftFormula 0 (.forall B))
       exact h_ctx
     have hA : ((.and (.forall A) (.forall B)) :: Γ).map (liftFormula 0) ⊢ substFormula 0 (#0) (liftFormula 1 A) := by
-      apply Derives.elim_forall (A := liftFormula 1 A) (t := .var 0)
+      apply Derives.elim_forall (A := liftFormula 1 A) (t := .bvar 0)
       exact h_forall_A
     rw [subst_lift_cancel_formula] at hA
     exact hA
@@ -102,7 +102,7 @@ theorem and_forall_impl_forall_and {Γ A B} : Γ ⊢ .impl (.and (.forall A) (.f
       apply Derives.elim_and_r (A := liftFormula 0 (.forall A))
       exact h_ctx
     have hB : ((.and (.forall A) (.forall B)) :: Γ).map (liftFormula 0) ⊢ substFormula 0 (#0) (liftFormula 1 B) := by
-      apply Derives.elim_forall (A := liftFormula 1 B) (t := .var 0)
+      apply Derives.elim_forall (A := liftFormula 1 B) (t := .bvar 0)
       exact h_forall_B
     rw [subst_lift_cancel_formula] at hB
     exact hB
@@ -112,9 +112,9 @@ theorem distrib_forall_and {Γ A B} : Γ ⊢ iff (.forall (.and A B)) (.and (.fo
   · exact forall_and_impl_and_forall
   · exact and_forall_impl_forall_and
 
-end FOL.Theorems.Quantifiers
+end FOL.Theorems.FOL.Quantifiers
 
-export FOL.Theorems.Quantifiers (
+export FOL.Theorems.FOL.Quantifiers (
   subst_lift_cancel_formula
   subst_distrib_and
   lift_distrib_and
