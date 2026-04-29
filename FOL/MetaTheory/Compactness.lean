@@ -42,9 +42,7 @@ theorem compactness_theorem (S : Formula → Prop) :
   apply Iff.intro
   · intro hSat Γ hSub
     obtain ⟨D, M, v, hEval⟩ := hSat
-    use D, M, v
-    intro f hf
-    exact hEval f (hSub f hf)
+    exact ⟨D, M, v, fun f hf => hEval f (hSub f hf)⟩
   · intro hFinSat
     apply model_existence_lemma
     intro hBot
