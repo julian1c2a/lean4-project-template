@@ -15,12 +15,113 @@ namespace FOL.Theorems.FOL.Quantifiers
 -- Nivel 4: Cuantificadores
 -- ============================================================
 
--- Propiedades de sustitución para variables abstractas.
--- Dada la complejidad de la aritmética de De Bruijn en Lean 4, 
--- declaramos estos lemas como axiomas por ahora, de acuerdo con la Fase 3.
-axiom subst_lift_cancel_formula (f : Formula) (v : Nat) (t : Term) : substFormula v t (liftFormula (v + 1) f) = f
-axiom subst_distrib_and (A B : Formula) (v : Nat) (t : Term) : substFormula v t (.and A B) = .and (substFormula v t A) (substFormula v t B)
-axiom lift_distrib_and (A B : Formula) (c : Nat) : liftFormula c (.and A B) = .and (liftFormula c A) (liftFormula c B)
+-- Los dos lemas de distribución son directamente reducciones definitionales.
+theorem subst_distrib_and (A B : Formula) (v : Nat) (t : Term) :
+    substFormula v t (.and A B) = .and (substFormula v t A) (substFormula v t B) := rfl
+
+theorem lift_distrib_and (A B : Formula) (c : Nat) :
+    liftFormula c (.and A B) = .and (liftFormula c A) (liftFormula c B) := rfl
+
+-- Lemas de cancelación en términos (para la prueba de subst_lift_cancel_formula).
+-- La identidad substTerm v (bvar v) (liftTerm (v+1) t) = t se verifica
+-- por inducción estructural sobre Term/List Term.
+mutual
+theorem substTerm_liftTerm_cancel (v : Nat) (t : Term) :
+    substTerm v (.bvar v) (liftTerm (v + 1) t) = t := by
+  match t with
+  | .bvar n =>
+    simp only [liftTerm]
+    -- Goal: substTerm v (#v) (if n < v + 1 then #n else #(n + 1)) = #n
+    split
+    · -- h1 : n < v + 1  →  liftTerm gives #n
+      next h1 =>
+      simp only [substTerm]
+      -- Goal: (if n = v then #v else if v < n then #(n-1) else #n) = #n
+      split
+      · -- h2 : n = v
+        next h2 => exact congrArg Term.bvar h2.symm
+      · -- h2 : n ≠ v
+        next h2 =>
+        split
+        · -- h3 : v < n, contradicts h1 : n < v+1
+          next h3 => omega
+        · -- ¬(v < n) and n ≠ v: n < v → result is #n
+          rfl
+    · -- h1 : ¬(n < v + 1)  →  liftTerm gives #(n+1)
+      next h1 =>
+      simp only [substTerm]
+      -- Goal: (if n+1 = v then #v else if v < n+1 then #(n+1-1) else #(n+1)) = #n
+      split
+      · -- h2 : n+1 = v, contradicts h1
+        next h2 => omega
+      · -- h2 : n+1 ≠ v
+        next h2 =>
+        split
+        · -- h3 : v < n+1 → result is #(n+1-1) = #n  (definitionally)
+          rfl
+        · -- h3 : ¬(v < n+1), contradicts h1
+          next h3 => omega
+  | .fvar _ => rfl
+  | .func f ts =>
+    simp only [liftTerm, substTerm]
+    exact congrArg (Term.func f) (substTerms_liftTerms_cancel v ts)
+
+theorem substTerms_liftTerms_cancel (v : Nat) (ts : List Term) :
+    substTerms v (.bvar v) (liftTerms (v + 1) ts) = ts := by
+  match ts with
+  | []        => rfl
+  | t :: ts'  =>
+    simp only [liftTerms, substTerms]
+    rw [substTerm_liftTerm_cancel v t, substTerms_liftTerms_cancel v ts']
+end
+
+-- substFormula v (bvar v) (liftFormula (v+1) f) = f
+-- Propiedad clave de De Bruijn: sustituir la variable libre v por (bvar v)
+-- tras un lift en (v+1) recupera la fórmula original.
+theorem subst_lift_cancel_formula (f : Formula) (v : Nat) :
+    substFormula v (.bvar v) (liftFormula (v + 1) f) = f := by
+  induction f generalizing v with
+  | bottom => rfl
+  | eq t1 t2 =>
+    show Formula.eq (substTerm v (.bvar v) (liftTerm (v + 1) t1))
+                    (substTerm v (.bvar v) (liftTerm (v + 1) t2)) = Formula.eq t1 t2
+    rw [substTerm_liftTerm_cancel v t1, substTerm_liftTerm_cancel v t2]
+  | atom p ts =>
+    show Formula.atom p (substTerms v (.bvar v) (liftTerms (v + 1) ts)) = Formula.atom p ts
+    rw [substTerms_liftTerms_cancel v ts]
+  | impl f1 f2 ih1 ih2 =>
+    show Formula.impl (substFormula v (.bvar v) (liftFormula (v + 1) f1))
+                      (substFormula v (.bvar v) (liftFormula (v + 1) f2)) = Formula.impl f1 f2
+    rw [ih1 v, ih2 v]
+  | and f1 f2 ih1 ih2 =>
+    show Formula.and (substFormula v (.bvar v) (liftFormula (v + 1) f1))
+                     (substFormula v (.bvar v) (liftFormula (v + 1) f2)) = Formula.and f1 f2
+    rw [ih1 v, ih2 v]
+  | or f1 f2 ih1 ih2 =>
+    show Formula.or (substFormula v (.bvar v) (liftFormula (v + 1) f1))
+                    (substFormula v (.bvar v) (liftFormula (v + 1) f2)) = Formula.or f1 f2
+    rw [ih1 v, ih2 v]
+  | «forall» f1 ih =>
+    -- liftFormula (v+1) (∀.f1) = ∀.(liftFormula (v+2) f1)
+    -- substFormula v (bvar v) (∀.X) = ∀.(substFormula (v+1) (liftTerm 0 (bvar v)) X)
+    -- liftTerm 0 (bvar v) = bvar (v+1)  (since v : Nat ≥ 0, so v < 0 is false)
+    show Formula.forall (substFormula (v + 1) (liftTerm 0 (.bvar v)) (liftFormula (v + 2) f1)) =
+         Formula.forall f1
+    have hlift : liftTerm 0 (Term.bvar v) = Term.bvar (v + 1) := by
+      simp only [liftTerm]
+      split
+      · next h => omega   -- v < 0, impossible for Nat
+      · rfl
+    rw [hlift]; exact congrArg Formula.forall (ih (v + 1))
+  | ex f1 ih =>
+    show Formula.ex (substFormula (v + 1) (liftTerm 0 (.bvar v)) (liftFormula (v + 2) f1)) =
+         Formula.ex f1
+    have hlift : liftTerm 0 (Term.bvar v) = Term.bvar (v + 1) := by
+      simp only [liftTerm]
+      split
+      · next h => omega
+      · rfl
+    rw [hlift]; exact congrArg Formula.ex (ih (v + 1))
 
 -- Lema auxiliar: ∀x. A ⇒ ∀x. ¬¬A
 theorem forall_dni {Γ A} : Γ ⊢ .impl (.forall A) (.forall (neg (neg A))) := by
