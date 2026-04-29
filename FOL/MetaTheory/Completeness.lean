@@ -634,8 +634,509 @@ decreasing_by all_goals simp +arith [formulaComplexity, complexity_substFormula,
     Nat.le_max_left, Nat.le_max_right]
 
 -- ============================================================
--- Extensión de Henkin y Completitud
+-- Infraestructura para la extensión de Henkin
 -- ============================================================
+
+-- PARTE 1: Sustitución de variables libres (fvar) en términos y fórmulas
+
+private mutual
+def fvarSubstTerm (c : String) (s : Term) : Term → Term
+  | .bvar n     => .bvar n
+  | .fvar x     => if x = c then s else .fvar x
+  | .func f ts  => .func f (fvarSubstTerms c s ts)
+
+def fvarSubstTerms (c : String) (s : Term) : List Term → List Term
+  | []       => []
+  | t :: ts  => fvarSubstTerm c s t :: fvarSubstTerms c s ts
+end
+
+private def fvarSubstFormula (c : String) (s : Term) : Formula → Formula
+  | .bottom       => .bottom
+  | .eq t1 t2     => .eq (fvarSubstTerm c s t1) (fvarSubstTerm c s t2)
+  | .atom p ts    => .atom p (fvarSubstTerms c s ts)
+  | .impl f1 f2   => .impl (fvarSubstFormula c s f1) (fvarSubstFormula c s f2)
+  | .and f1 f2    => .and (fvarSubstFormula c s f1) (fvarSubstFormula c s f2)
+  | .or f1 f2     => .or (fvarSubstFormula c s f1) (fvarSubstFormula c s f2)
+  | .forall f1    => .forall (fvarSubstFormula c (liftTerm 0 s) f1)
+  | .ex f1        => .ex (fvarSubstFormula c (liftTerm 0 s) f1)
+
+-- Predicado de frescura: fvar c no aparece en el término/fórmula
+private mutual
+def fvarFreeTerm (c : String) : Term → Bool
+  | .bvar _    => true
+  | .fvar x    => !decide (x = c)
+  | .func _ ts => fvarFreeTerms c ts
+
+def fvarFreeTerms (c : String) : List Term → Bool
+  | []       => true
+  | t :: ts  => fvarFreeTerm c t && fvarFreeTerms c ts
+end
+
+private def fvarFreeFormula (c : String) : Formula → Bool
+  | .bottom       => true
+  | .eq t1 t2     => fvarFreeTerm c t1 && fvarFreeTerm c t2
+  | .atom _ ts    => fvarFreeTerms c ts
+  | .impl f1 f2   | .and f1 f2   | .or f1 f2 =>
+      fvarFreeFormula c f1 && fvarFreeFormula c f2
+  | .forall f1    | .ex f1       => fvarFreeFormula c f1
+
+-- fvarSubst es la identidad cuando c es fresco
+private mutual
+theorem fvarSubst_id_term (c : String) (s : Term) (t : Term)
+    (h : fvarFreeTerm c t = true) : fvarSubstTerm c s t = t := by
+  match t with
+  | .bvar _ => rfl
+  | .fvar x =>
+    simp only [fvarFreeTerm, Bool.not_eq_true', decide_eq_false_iff_not] at h
+    simp [fvarSubstTerm, h]
+  | .func f ts =>
+    simp only [fvarSubstTerm]
+    congr 1
+    exact fvarSubst_id_terms c s ts h
+
+theorem fvarSubst_id_terms (c : String) (s : Term) (ts : List Term)
+    (h : fvarFreeTerms c ts = true) : fvarSubstTerms c s ts = ts := by
+  match ts with
+  | []       => rfl
+  | t :: ts' =>
+    simp only [fvarFreeTerms, Bool.and_eq_true] at h
+    simp only [fvarSubstTerms]
+    exact ⟨fvarSubst_id_term c s t h.1, fvarSubst_id_terms c s ts' h.2⟩ |>.elim
+      (fun ht hts => by rw [ht, hts])
+end
+
+private theorem fvarSubst_id_formula (c : String) (s : Term) (f : Formula)
+    (h : fvarFreeFormula c f = true) : fvarSubstFormula c s f = f := by
+  induction f generalizing s with
+  | bottom => rfl
+  | eq t1 t2 =>
+    simp only [fvarFreeFormula, Bool.and_eq_true] at h
+    simp [fvarSubstFormula, fvarSubst_id_term c s t1 h.1, fvarSubst_id_term c s t2 h.2]
+  | atom _ ts =>
+    simp [fvarSubstFormula, fvarSubst_id_terms c s ts h]
+  | impl f1 f2 ih1 ih2 | and f1 f2 ih1 ih2 | or f1 f2 ih1 ih2 =>
+    simp only [fvarFreeFormula, Bool.and_eq_true] at h
+    simp [fvarSubstFormula, ih1 s h.1, ih2 s h.2]
+  | «forall» f1 ih | ex f1 ih =>
+    simp only [fvarFreeFormula] at h
+    simp [fvarSubstFormula, ih (liftTerm 0 s) h]
+
+-- PARTE 2: Conmutatividad de liftTerm y liftFormula
+
+private mutual
+theorem liftTerm_comm (b a : Nat) (h : b ≤ a) (t : Term) :
+    liftTerm (a + 1) (liftTerm b t) = liftTerm b (liftTerm a t) := by
+  match t with
+  | .bvar n =>
+    simp only [liftTerm]
+    split_ifs with h1 h2 h3 h4 h5 <;> try omega <;> try rfl
+  | .fvar _ => rfl
+  | .func f ts =>
+    simp only [liftTerm]
+    exact congrArg (Term.func f) (liftTerms_comm b a h ts)
+
+theorem liftTerms_comm (b a : Nat) (h : b ≤ a) (ts : List Term) :
+    liftTerms (a + 1) (liftTerms b ts) = liftTerms b (liftTerms a ts) := by
+  match ts with
+  | []       => rfl
+  | t :: ts' =>
+    simp only [liftTerms]
+    exact ⟨liftTerm_comm b a h t, liftTerms_comm b a h ts'⟩ |>.elim
+      (fun ht hts => by rw [ht, hts])
+end
+
+private theorem liftFormula_comm (b a : Nat) (h : b ≤ a) (f : Formula) :
+    liftFormula (a + 1) (liftFormula b f) = liftFormula b (liftFormula a f) := by
+  induction f generalizing b a with
+  | bottom => rfl
+  | eq t1 t2 =>
+    simp [liftFormula, liftTerm_comm b a h t1, liftTerm_comm b a h t2]
+  | atom _ ts =>
+    simp [liftFormula, liftTerms_comm b a h ts]
+  | impl f1 f2 ih1 ih2 | and f1 f2 ih1 ih2 | or f1 f2 ih1 ih2 =>
+    simp [liftFormula, ih1 b a h, ih2 b a h]
+  | «forall» f1 ih | ex f1 ih =>
+    simp [liftFormula, ih (b + 1) (a + 1) (Nat.add_le_add_right h 1)]
+
+-- Conmutatividad especial: 0 ≤ c → liftFormula (c+1) ∘ liftFormula 0 = liftFormula 0 ∘ liftFormula c
+private theorem liftFormula_comm_zero (c : Nat) (f : Formula) :
+    liftFormula (c + 1) (liftFormula 0 f) = liftFormula 0 (liftFormula c f) :=
+  liftFormula_comm 0 c (Nat.zero_le c) f
+
+-- PARTE 3: Conmutatividad de lift y sustitución
+
+private mutual
+theorem lift_subst_comm_term (v c : Nat) (h : v ≤ c) (s : Term) (t : Term) :
+    liftTerm c (substTerm v s t) = substTerm v (liftTerm c s) (liftTerm (c + 1) t) := by
+  match t with
+  | .bvar n =>
+    simp only [substTerm, liftTerm]
+    split_ifs with h1 h2 h3 h4 h5 <;> try omega <;> try rfl
+    · omega
+  | .fvar _ => simp [substTerm, liftTerm]
+  | .func f ts =>
+    simp only [substTerm, liftTerm]
+    exact congrArg (Term.func f) (lift_subst_comm_terms v c h s ts)
+
+theorem lift_subst_comm_terms (v c : Nat) (h : v ≤ c) (s : Term) (ts : List Term) :
+    liftTerms c (substTerms v s ts) = substTerms v (liftTerm c s) (liftTerms (c + 1) ts) := by
+  match ts with
+  | []       => rfl
+  | t :: ts' =>
+    simp only [substTerms, liftTerms]
+    exact ⟨lift_subst_comm_term v c h s t, lift_subst_comm_terms v c h s ts'⟩ |>.elim
+      (fun ht hts => by rw [ht, hts])
+end
+
+private theorem lift_subst_comm_formula (v c : Nat) (h : v ≤ c) (s : Term) (f : Formula) :
+    liftFormula c (substFormula v s f) =
+    substFormula v (liftTerm c s) (liftFormula (c + 1) f) := by
+  induction f generalizing v c s with
+  | bottom => rfl
+  | eq t1 t2 =>
+    simp [liftFormula, substFormula, lift_subst_comm_term v c h s t1,
+          lift_subst_comm_term v c h s t2]
+  | atom _ ts =>
+    simp [liftFormula, substFormula, lift_subst_comm_terms v c h s ts]
+  | impl f1 f2 ih1 ih2 | and f1 f2 ih1 ih2 | or f1 f2 ih1 ih2 =>
+    simp [liftFormula, substFormula, ih1 v c h s, ih2 v c h s]
+  | «forall» f1 ih | ex f1 ih =>
+    simp only [liftFormula, substFormula]
+    have hcomm : liftTerm (c + 1) (liftTerm 0 s) = liftTerm 0 (liftTerm c s) :=
+      liftTerm_comm 0 c (Nat.zero_le c) s
+    rw [← hcomm]
+    exact congrArg Formula.forall (ih (v + 1) (c + 1) (Nat.add_le_add_right h 1) (liftTerm 0 s))
+
+-- Caso especial: v=0, c=0, s=fvar name (que usaremos en la prueba principal)
+private theorem lift_subst_comm_zero (s : Term) (A : Formula) :
+    liftFormula 0 (substFormula 0 s A) = substFormula 0 (liftTerm 0 s) (liftFormula 1 A) :=
+  lift_subst_comm_formula 0 0 (Nat.le_refl 0) s A
+
+-- PARTE 4: Posición y conmutatividad de lift con getAt?/replaceAt
+
+private def posDepth : Pos → Nat
+  | .root     => 0
+  | .left p   => posDepth p
+  | .right p  => posDepth p
+  | .body p   => posDepth p + 1
+
+private theorem lift_getAt? (c : Nat) {f : Formula} {p : Pos} {sub : Formula}
+    (h : getAt? f p = some sub) :
+    getAt? (liftFormula c f) p = some (liftFormula (c + posDepth p) sub) := by
+  induction p generalizing f c with
+  | root =>
+    simp only [getAt?] at h
+    simp [getAt?, posDepth, h]
+  | left p' ih =>
+    simp only [posDepth]
+    match f with
+    | .impl f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | .and f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | .or f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | _ => simp [getAt?] at h
+  | right p' ih =>
+    simp only [posDepth]
+    match f with
+    | .impl f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | .and f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | .or f1 f2 =>
+      simp only [getAt?] at h
+      simp [getAt?, liftFormula, ih h]
+    | _ => simp [getAt?] at h
+  | body p' ih =>
+    simp only [posDepth]
+    match f with
+    | .forall f1 =>
+      simp only [getAt?] at h
+      simp only [liftFormula, getAt?]
+      have := ih (c := c + 1) h
+      simp only [posDepth] at this
+      convert this using 2
+      omega
+    | .ex f1 =>
+      simp only [getAt?] at h
+      simp only [liftFormula, getAt?]
+      have := ih (c := c + 1) h
+      simp only [posDepth] at this
+      convert this using 2
+      omega
+    | _ => simp [getAt?] at h
+
+private theorem lift_replaceAt (c : Nat) (f : Formula) (p : Pos) (sub' : Formula) :
+    liftFormula c (replaceAt f p sub') =
+    replaceAt (liftFormula c f) p (liftFormula (c + posDepth p) sub') := by
+  induction p generalizing f c with
+  | root => simp [replaceAt, posDepth]
+  | left p' ih =>
+    simp only [posDepth]
+    match f with
+    | .impl f1 f2 => simp [replaceAt, liftFormula, ih f1]
+    | .and f1 f2  => simp [replaceAt, liftFormula, ih f1]
+    | .or f1 f2   => simp [replaceAt, liftFormula, ih f1]
+    | _ => simp [replaceAt, liftFormula]
+  | right p' ih =>
+    simp only [posDepth]
+    match f with
+    | .impl f1 f2 => simp [replaceAt, liftFormula, ih f2]
+    | .and f1 f2  => simp [replaceAt, liftFormula, ih f2]
+    | .or f1 f2   => simp [replaceAt, liftFormula, ih f2]
+    | _ => simp [replaceAt, liftFormula]
+  | body p' ih =>
+    simp only [posDepth]
+    match f with
+    | .forall f1 =>
+      simp only [replaceAt, liftFormula]
+      have h := ih (c := c + 1) f1
+      simp only [posDepth] at h
+      convert congrArg Formula.forall h using 2
+      omega
+    | .ex f1 =>
+      simp only [replaceAt, liftFormula]
+      have h := ih (c := c + 1) f1
+      simp only [posDepth] at h
+      convert congrArg Formula.ex h using 2
+      omega
+    | _ => simp [replaceAt, liftFormula]
+
+private theorem lift_LocalRule (d : Nat) {sub sub' : Formula}
+    (h : LocalRule sub sub') : LocalRule (liftFormula d sub) (liftFormula d sub') := by
+  cases h with
+  | commuteImpl A B C =>
+    simp only [liftFormula]
+    exact LocalRule.commuteImpl (liftFormula d A) (liftFormula d B) (liftFormula d C)
+
+-- PARTE 5: lift_derives_gen — levantar derivaciones
+
+private theorem lift_derives_gen {Γ : List Formula} {f : Formula} (h : Γ ⊢ f) :
+    ∀ c, Γ.map (liftFormula c) ⊢ liftFormula c f := by
+  intro c
+  induction h generalizing c with
+  | hyp Γ f hf =>
+    exact Derives.hyp _ _ (List.mem_map.mpr ⟨f, hf, rfl⟩)
+  | intro_impl Γ A B _ ih =>
+    simp only [liftFormula]
+    exact Derives.intro_impl _ _ _ (ih c)
+  | elim_impl Γ A B _ _ ih1 ih2 =>
+    exact Derives.elim_impl _ _ _ (ih1 c) (ih2 c)
+  | intro_and Γ A B _ _ ih1 ih2 =>
+    simp only [liftFormula]
+    exact Derives.intro_and _ _ _ (ih1 c) (ih2 c)
+  | elim_and_l Γ A B _ ih =>
+    exact Derives.elim_and_l _ _ _ (ih c)
+  | elim_and_r Γ A B _ ih =>
+    exact Derives.elim_and_r _ _ _ (ih c)
+  | intro_or_l Γ A B _ ih =>
+    simp only [liftFormula]
+    exact Derives.intro_or_l _ _ _ (ih c)
+  | intro_or_r Γ A B _ ih =>
+    simp only [liftFormula]
+    exact Derives.intro_or_r _ _ _ (ih c)
+  | elim_or Γ A B C _ _ _ ih1 ih2 ih3 =>
+    exact Derives.elim_or _ _ _ _ (ih1 c) (ih2 c) (ih3 c)
+  | intro_forall Γ A _ ih =>
+    simp only [liftFormula]
+    apply Derives.intro_forall
+    -- Need: (Γ.map (liftFormula c)).map (liftFormula 0) ⊢ liftFormula (c+1) A
+    -- From ih (c+1): (Γ.map (liftFormula 0)).map (liftFormula (c+1)) ⊢ liftFormula (c+1) A
+    -- And: (Γ.map (liftFormula 0)).map (liftFormula (c+1)) = (Γ.map (liftFormula c)).map (liftFormula 0)
+    have hih := ih (c + 1)
+    simp only [List.map_map] at hih ⊢
+    convert hih using 2
+    ext f
+    exact (liftFormula_comm_zero c f).symm
+  | elim_forall Γ A t _ ih =>
+    simp only [liftFormula]
+    rw [lift_subst_comm_formula 0 c (Nat.zero_le c) t A]
+    exact Derives.elim_forall _ _ _ (ih c)
+  | intro_ex Γ A t _ ih =>
+    simp only [liftFormula]
+    rw [lift_subst_comm_formula 0 c (Nat.zero_le c) t A]
+    exact Derives.intro_ex _ _ _ (ih c)
+  | elim_ex Γ A B _ _ ih1 ih2 =>
+    simp only [liftFormula]
+    apply Derives.elim_ex _ (liftFormula (c + 1) A)
+    · exact ih1 c
+    · -- Need: liftFormula (c+1) A :: (Γ.map (liftFormula c)).map (liftFormula 0) ⊢ liftFormula 0 (liftFormula c B)
+      -- From ih2 (c+1): (A :: Γ.map (liftFormula 0)).map (liftFormula (c+1)) ⊢ liftFormula (c+1) (liftFormula 0 B)
+      have hih := ih2 (c + 1)
+      simp only [List.map_cons, List.map_map] at hih
+      rw [liftFormula_comm 0 c (Nat.zero_le c)] at hih
+      convert hih using 1
+      · congr 1
+        simp only [List.map_map]
+        congr 1
+        ext f
+        exact (liftFormula_comm_zero c f).symm
+      · exact (liftFormula_comm 0 c (Nat.zero_le c) B).symm
+  | bot_elim Γ A _ ih =>
+    exact Derives.bot_elim _ _ (ih c)
+  | eq_refl Γ t =>
+    simp only [liftFormula]
+    exact Derives.eq_refl _ _
+  | eq_subst Γ A t1 t2 _ _ ih1 ih2 =>
+    simp only [liftFormula]
+    rw [lift_subst_comm_formula 0 c (Nat.zero_le c) t1 A,
+        lift_subst_comm_formula 0 c (Nat.zero_le c) t2 A]
+    exact Derives.eq_subst _ _ _ _ (ih1 c) (ih2 c)
+  | weakening Γ Γ' f _ hSub ih =>
+    exact Derives.weakening _ _ _ (ih c) (fun x hx =>
+      List.mem_map.mpr (let ⟨y, hyΓ', hyeq⟩ := List.mem_map.mp hx
+                        ⟨y, hSub y (by simpa using hyΓ'), hyeq⟩))
+  | rewrite_at Γ f f' p sub sub' _ hGet hRule hReplace ih =>
+    have hGetLift := lift_getAt? c hGet
+    have hRuleLift := lift_LocalRule (c + posDepth p) hRule
+    have hReplaceLift := (lift_replaceAt c f p sub').symm
+    rw [hReplace] at hReplaceLift ⊢
+    exact Derives.rewrite_at _ _ _ p _ _
+      (ih c) hGetLift hRuleLift (by rw [← lift_replaceAt])
+
+-- PARTE 6: Álgebra de fvarSubst
+
+-- Conmutatividad: fvarSubst y liftTerm
+private theorem fvarSubst_liftTerm (c : String) (s : Term) (t : Term) :
+    fvarSubstTerm c s (liftTerm 0 t) = liftTerm 0 (fvarSubstTerm c s t) := by
+  match t with
+  | .bvar n =>
+    simp [liftTerm, fvarSubstTerm]
+    split_ifs <;> simp [liftTerm]
+  | .fvar x => simp [liftTerm, fvarSubstTerm]
+  | .func f ts =>
+    simp only [liftTerm, fvarSubstTerm]
+    congr 1
+    induction ts with
+    | nil => rfl
+    | cons t ts' ih =>
+      simp only [liftTerms, fvarSubstTerms]
+      rw [fvarSubst_liftTerm c s t, ih]
+
+-- Identidad clave: fvarSubst c (bvar 0) (substFormula 0 (fvar c) (liftFormula 1 A)) = A
+-- cuando c ∉ fvars(A)
+-- Paso 1: fvarSubst c s (substFormula 0 (fvar c) t) = substTerm 0 s t cuando c ∉ fvars(t)
+private mutual
+theorem fvarSubst_subst_term (c : String) (s : Term) (t : Term)
+    (hfree : fvarFreeTerm c t = true) :
+    fvarSubstTerm c s (substTerm 0 (Term.fvar c) t) = substTerm 0 s t := by
+  match t with
+  | .bvar n =>
+    simp only [substTerm]
+    split_ifs with h
+    · simp [fvarSubstTerm]
+    · simp only [fvarSubstTerm]
+    · simp only [fvarSubstTerm]
+  | .fvar x =>
+    simp only [fvarFreeTerm, Bool.not_eq_true', decide_eq_false_iff_not] at hfree
+    simp only [substTerm, fvarSubstTerm]
+    split_ifs with h
+    · exact absurd h hfree
+    · simp [fvarSubstTerm, h]
+  | .func f ts =>
+    simp only [substTerm, fvarSubstTerm]
+    exact congrArg (Term.func f) (fvarSubst_subst_terms c s ts hfree)
+
+theorem fvarSubst_subst_terms (c : String) (s : Term) (ts : List Term)
+    (hfree : fvarFreeTerms c ts = true) :
+    fvarSubstTerms c s (substTerms 0 (Term.fvar c) ts) = substTerms 0 s ts := by
+  match ts with
+  | []       => rfl
+  | t :: ts' =>
+    simp only [fvarFreeTerms, Bool.and_eq_true] at hfree
+    simp only [substTerms, fvarSubstTerms,
+               fvarSubst_subst_term c s t hfree.1,
+               fvarSubst_subst_terms c s ts' hfree.2]
+end
+
+-- liftTermN: apply liftTerm 0 n times (needed before fvarSubst_subst_formula_gen)
+private def liftTermN : Nat → Term → Term
+  | 0,     t => t
+  | n + 1, t => liftTerm 0 (liftTermN n t)
+
+-- General term/list-level identity: fvarSubst c (liftTermN v s) (substTerm v (fvar c) t) = substTerm v (liftTermN v s) t
+-- when fvar c ∉ t  (arbitrary depth v)
+private mutual
+theorem fvarSubst_subst_term_gen (c : String) (s : Term) (v : Nat) (t : Term)
+    (hfree : fvarFreeTerm c t = true) :
+    fvarSubstTerm c (liftTermN v s) (substTerm v (Term.fvar c) t) =
+    substTerm v (liftTermN v s) t := by
+  match t with
+  | .bvar n =>
+    simp only [substTerm]
+    split_ifs with h1 h2
+    · -- n = v → substTerm gives fvar c → fvarSubst replaces with liftTermN v s
+      simp [fvarSubstTerm]
+    · -- n > v → bvar (n-1) → unchanged by fvarSubst
+      simp [fvarSubstTerm]
+    · -- n < v → bvar n → unchanged by fvarSubst
+      simp [fvarSubstTerm]
+  | .fvar x =>
+    simp only [fvarFreeTerm, Bool.not_eq_true', decide_eq_false_iff_not] at hfree
+    simp only [substTerm, fvarSubstTerm]
+    split_ifs with h
+    · exact absurd h hfree
+    · simp [fvarSubstTerm, h]
+  | .func f ts =>
+    simp only [substTerm, fvarSubstTerm]
+    exact congrArg (Term.func f) (fvarSubst_subst_terms_gen c s v ts hfree)
+
+theorem fvarSubst_subst_terms_gen (c : String) (s : Term) (v : Nat) (ts : List Term)
+    (hfree : fvarFreeTerms c ts = true) :
+    fvarSubstTerms c (liftTermN v s) (substTerms v (Term.fvar c) ts) =
+    substTerms v (liftTermN v s) ts := by
+  match ts with
+  | [] => rfl
+  | t :: ts' =>
+    simp only [fvarFreeTerms, Bool.and_eq_true] at hfree
+    simp only [substTerms, fvarSubstTerms,
+               fvarSubst_subst_term_gen c s v t hfree.1,
+               fvarSubst_subst_terms_gen c s v ts' hfree.2]
+end
+
+-- General formula-level identity at arbitrary depth v
+private theorem fvarSubst_subst_formula_gen (c : String) (s : Term) (v : Nat) (f : Formula)
+    (hfree : fvarFreeFormula c f = true) :
+    fvarSubstFormula c (liftTermN v s) (substFormula v (Term.fvar c) f) =
+    substFormula v (liftTermN v s) f := by
+  induction f generalizing v with
+  | bottom => rfl
+  | eq t1 t2 =>
+    simp only [fvarFreeFormula, Bool.and_eq_true] at hfree
+    simp [substFormula, fvarSubstFormula,
+          fvarSubst_subst_term_gen c s v t1 hfree.1,
+          fvarSubst_subst_term_gen c s v t2 hfree.2]
+  | atom _ ts =>
+    simp [substFormula, fvarSubstFormula, fvarSubst_subst_terms_gen c s v ts hfree]
+  | impl f1 f2 ih1 ih2 | and f1 f2 ih1 ih2 | or f1 f2 ih1 ih2 =>
+    simp only [fvarFreeFormula, Bool.and_eq_true] at hfree
+    simp [substFormula, fvarSubstFormula, ih1 v hfree.1, ih2 v hfree.2]
+  | «forall» f1 ih =>
+    simp only [fvarFreeFormula] at hfree
+    -- By definition: both sides reduce to forall (...) with v+1
+    -- liftTerm 0 (fvar c) = fvar c and liftTerm 0 (liftTermN v s) = liftTermN (v+1) s (definitional)
+    show Formula.forall (fvarSubstFormula c (liftTermN (v + 1) s)
+           (substFormula (v + 1) (Term.fvar c) f1)) =
+         Formula.forall (substFormula (v + 1) (liftTermN (v + 1) s) f1)
+    exact congrArg Formula.forall (ih (v + 1) hfree)
+  | ex f1 ih =>
+    simp only [fvarFreeFormula] at hfree
+    show Formula.ex (fvarSubstFormula c (liftTermN (v + 1) s)
+           (substFormula (v + 1) (Term.fvar c) f1)) =
+         Formula.ex (substFormula (v + 1) (liftTermN (v + 1) s) f1)
+    exact congrArg Formula.ex (ih (v + 1) hfree)
+
+-- Corollary at depth 0: fvarSubst c s (substFormula 0 (fvar c) f) = substFormula 0 s f
+private theorem fvarSubst_subst_formula (c : String) (s : Term) (f : Formula)
+    (hfree : fvarFreeFormula c f = true) :
+    fvarSubstFormula c s (substFormula 0 (Term.fvar c) f) = substFormula 0 s f :=
+  fvarSubst_subst_formula_gen c s 0 f hfree
 
 axiom henkin_extension_lemma {S : Formula → Prop} (hCons : IsConsistent S) :
     ∃ (S' : Formula → Prop), IsMaximalConsistent S' ∧ IsHenkin S' ∧ (∀ f, S f → S' f)
