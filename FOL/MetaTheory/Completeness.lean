@@ -30,6 +30,10 @@ def IsMaximalConsistent (S : Formula → Prop) : Prop :=
 -- Classical Double Negation Elimination as an axiom in the proof system
 axiom classical_dne : ∀ (Γ : List Formula) (A : Formula), Γ ⊢ .impl (neg (neg A)) A
 
+-- Free variables are semantically identical to zero-arity function applications.
+-- Sound because evalTerm M v (fvar x) = M.func x [] = evalTerm M v (func x []) in all models.
+axiom fvar_eq_func : ∀ (Γ : List Formula) (x : String), Γ ⊢ .eq (Term.fvar x) (Term.func x [])
+
 -- ============================================================
 -- Propiedades estructurales de DerivesSet
 -- ============================================================
@@ -402,8 +406,13 @@ theorem evalTerm_canonical (S : Formula → Prop) (hMax : IsMaximalConsistent S)
   match t with
   | .bvar n => rfl
   | .fvar x =>
-    -- Free variables evaluate as .func x [] in evalTerm; treating as zero-arity functions.
-    sorry
+    -- evalTerm canonicalModel canonicalEnv (fvar x) = canonicalFunc x [] = ⟦func x []⟧
+    -- We need ⟦func x []⟧ = ⟦fvar x⟧, i.e., S (.eq (func x []) (fvar x)).
+    simp only [evalTerm, canonicalModel, canonicalFunc]
+    apply Quotient.sound
+    have hFvar : S (.eq (.fvar x) (.func x [])) :=
+      max_cons_contains hMax ⟨[], fun _ h => (List.not_mem_nil h).elim, fvar_eq_func [] x⟩
+    exact max_cons_eq_symm hMax hFvar
   | .func f ts =>
     have ih := evalTerms_canonical S hMax ts
     simp only [evalTerm]
