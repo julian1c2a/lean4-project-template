@@ -492,6 +492,30 @@ theorem max_cons_ex {S : Formula → Prop} (hMax : IsMaximalConsistent S) (hHenk
         | tail _ h => exact (List.not_mem_nil h).elim,
       Derives.intro_ex _ A t (Derives.hyp _ _ (List.Mem.head _))⟩
 
+-- Classical De Morgan for ∀: ¬∀x.A → ∃x.¬A
+-- Proof: apply DNE to ∃x.¬A; show ¬¬(∃x.¬A) by assuming ¬∃x.¬A,
+-- proving ∀x.A (using DNE pointwise), contradicting ¬∀x.A.
+theorem forall_not_impl_exists_not_cl {Γ : List Formula} {A : Formula} :
+    Γ ⊢ .impl (neg (.forall A)) (.ex (neg A)) := by
+  apply Derives.intro_impl
+  apply Derives.elim_impl (A := neg (neg (.ex (neg A))))
+  · exact classical_dne _ _
+  · apply Derives.intro_impl
+    apply Derives.elim_impl (A := .forall A)
+    · exact Derives.hyp _ _ (List.Mem.tail _ (List.Mem.head _))
+    · apply Derives.intro_forall
+      apply Derives.elim_impl (A := neg (neg A))
+      · exact classical_dne _ _
+      · apply Derives.intro_impl
+        apply Derives.elim_impl (A := .ex (neg (liftFormula 1 A)))
+        · exact Derives.hyp _ _ (List.Mem.tail _ (List.Mem.head _))
+        · apply Derives.intro_ex (t := .bvar 0)
+          have hSubst : substFormula 0 (.bvar 0) (neg (liftFormula 1 A)) = neg A := by
+            show Formula.impl (substFormula 0 (.bvar 0) (liftFormula 1 A)) ⊥ = Formula.impl A ⊥
+            rw [subst_lift_cancel_formula]
+          rw [hSubst]
+          exact Derives.hyp _ _ (List.Mem.head _)
+
 theorem max_cons_forall {S : Formula → Prop} (hMax : IsMaximalConsistent S) (hHenkin : IsHenkin S)
     {A : Formula} : S (.forall A) ↔ ∀ t, S (substFormula 0 t A) := by
   constructor
@@ -512,7 +536,7 @@ theorem max_cons_forall {S : Formula → Prop} (hMax : IsMaximalConsistent S) (h
       have hNegForall : S ⊢* neg (.forall A) := DerivesSet_intro_impl' hInc
       -- Classical: ¬∀x.A → ∃x.¬A (requires classical De Morgan in object system)
       have hExNeg_impl : S ⊢* .impl (neg (.forall A)) (.ex (neg A)) :=
-        ⟨[], fun _ h => (List.not_mem_nil h).elim, sorry⟩
+        ⟨[], fun _ h => (List.not_mem_nil h).elim, forall_not_impl_exists_not_cl⟩
       have hExNeg := DerivesSet_elim_impl hExNeg_impl hNegForall
       obtain ⟨t, ht⟩ := hHenkin (neg A) (max_cons_contains hMax hExNeg)
       apply hMax.left
