@@ -30,10 +30,6 @@ def IsMaximalConsistent (S : Formula → Prop) : Prop :=
 -- Classical Double Negation Elimination as an axiom in the proof system
 axiom classical_dne : ∀ (Γ : List Formula) (A : Formula), Γ ⊢ .impl (neg (neg A)) A
 
--- Free variables are semantically identical to zero-arity function applications.
--- Sound because evalTerm M v (fvar x) = M.func x [] = evalTerm M v (func x []) in all models.
-axiom fvar_eq_func : ∀ (Γ : List Formula) (x : String), Γ ⊢ .eq (Term.fvar x) (Term.func x [])
-
 -- ============================================================
 -- Propiedades estructurales de DerivesSet
 -- ============================================================

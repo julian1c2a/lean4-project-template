@@ -25,6 +25,11 @@ theorem deduction_theorem {Γ A B} (h : A :: Γ ⊢ B) : Γ ⊢ .impl A B := by
   apply Derives.intro_impl
   exact h
 
+-- Free variables are semantically identical to zero-arity function applications:
+-- evalTerm M v (fvar x) = M.func x [] = evalTerm M v (func x []) in all models.
+-- This axiom is sound but not derivable from the current proof rules.
+axiom fvar_eq_func : ∀ (Γ : List Formula) (x : String), Γ ⊢ .eq (Term.fvar x) (Term.func x [])
+
 end FOL.Metamath.Deduction
 
-export FOL.Metamath.Deduction (deduction_theorem)
+export FOL.Metamath.Deduction (deduction_theorem fvar_eq_func)
