@@ -9,6 +9,7 @@ import FOL.Semantics.Basic
 import FOL.ProofSystem.Deduction
 import FOL.Theorems.Prop.Neg
 import FOL.Theorems.FOL.Quantifiers
+import FOL.Util.Encoding
 
 namespace FOL.Metamath.Completeness
 
@@ -75,8 +76,9 @@ theorem DerivesSet_elim_impl {S : Formula → Prop} {A B : Formula}
 -- Lema de Lindenbaum
 -- ============================================================
 
-axiom formula_enum : Nat → Formula
-axiom formula_enum_surj : ∀ f : Formula, ∃ n, formula_enum n = f
+-- formula_enum and formula_enum_surj are proved in FOL.Util.Encoding
+-- (injective encoding Formula → Nat + Classical.choose)
+open FOL.Util.Encoding (formula_enum formula_enum_surj)
 
 noncomputable def LindenbaumStep (S : Formula → Prop) : Nat → (Formula → Prop)
   | 0 => S
