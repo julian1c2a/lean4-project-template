@@ -45,7 +45,7 @@ abbrev TextFormula := List Symbol
 /-- Funciones de ayuda para mostrar símbolos como texto -/
 def Symbol.toString : Symbol → String
   | fvar n     => n
-  | bvar i     => "$v_{" ++ ToString.toString i ++ "}$"
+  | bvar i     => s!"v_{i}"
   | func n     => n
   | pred n     => n
   | forall_sym => "∀"
