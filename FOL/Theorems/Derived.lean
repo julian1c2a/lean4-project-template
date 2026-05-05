@@ -13,7 +13,7 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Theorems.Neg
+import FOL.Theorems.Prop.Neg
 
 namespace FOL.Theorems.Derived
 

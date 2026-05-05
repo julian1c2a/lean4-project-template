@@ -13,9 +13,9 @@ License: MIT
 -- @importance: high
 
 import FOL.FOL
-import FOL.Semantics
-import FOL.Soundness
-import FOL.Completeness
+import FOL.Semantics.Basic
+import FOL.MetaTheory.Soundness
+import FOL.MetaTheory.Completeness
 
 namespace FOL.Metamath.Compacity
 
@@ -42,9 +42,7 @@ theorem compactness_theorem (S : Formula → Prop) :
   apply Iff.intro
   · intro hSat Γ hSub
     obtain ⟨D, M, v, hEval⟩ := hSat
-    use D, M, v
-    intro f hf
-    exact hEval f (hSub f hf)
+    exact ⟨D, M, v, fun f hf => hEval f (hSub f hf)⟩
   · intro hFinSat
     apply model_existence_lemma
     intro hBot
@@ -55,4 +53,7 @@ theorem compactness_theorem (S : Formula → Prop) :
 
 end FOL.Metamath.Compacity
 
-export FOL.Metamath.Compacity (consistency_of_satisfiable compactness_theorem)
+export FOL.Metamath.Compacity (
+  consistency_of_satisfiable
+  compactness_theorem
+)

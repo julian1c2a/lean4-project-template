@@ -8,12 +8,14 @@
 -- Usamos índices de De Bruijn para las variables (Nat) para evitar colisiones de nombres.
 
 inductive Term where
-  | var  : Nat → Term
+  | bvar : Nat → Term
+  | fvar : String → Term
   | func : String → List Term → Term
   deriving Repr, BEq
 
 inductive Formula where
   | bottom : Formula
+  | eq     : Term → Term → Formula
   | atom   : String → List Term → Formula
   | impl   : Formula → Formula → Formula
   | forall : Formula → Formula
@@ -33,6 +35,7 @@ def iff (f1 f2 : Formula) : Formula := Formula.and (Formula.impl f1 f2) (Formula
 notation "⊥" => Formula.bottom
 notation "⊤" => top
 prefix:75 "¬ " => neg
+infix:50 " ≐ " => Formula.eq
 infixr:70 " ∧ " => Formula.and
 infixr:65 " ∨ " => Formula.or
 infixr:60 " ⇒ " => Formula.impl
@@ -45,7 +48,7 @@ instance : Coe String Formula where
   coe s := Formula.atom s []
 
 -- Notación para variables de De Bruijn
-prefix:max "#" => Term.var
+prefix:max "#" => Term.bvar
 
 -- 1.5. LIFT Y SUSTITUCIÓN (De Bruijn)
 
@@ -54,7 +57,8 @@ prefix:max "#" => Term.var
 mutual
 def liftTerm (c : Nat) (t : Term) : Term :=
   match t with
-  | .var n => if n < c then .var n else .var (n + 1)
+  | .bvar n => if n < c then .bvar n else .bvar (n + 1)
+  | .fvar x => .fvar x
   | .func f ts => .func f (liftTerms c ts)
 
 def liftTerms (c : Nat) (ts : List Term) : List Term :=
@@ -66,6 +70,7 @@ end
 def liftFormula (c : Nat) (f : Formula) : Formula :=
   match f with
   | .bottom => .bottom
+  | .eq t1 t2 => .eq (liftTerm c t1) (liftTerm c t2)
   | .atom p ts => .atom p (liftTerms c ts)
   | .impl f1 f2 => .impl (liftFormula c f1) (liftFormula c f2)
   | .forall f1 => .forall (liftFormula (c + 1) f1)
@@ -78,10 +83,11 @@ def liftFormula (c : Nat) (f : Formula) : Formula :=
 mutual
 def substTerm (v : Nat) (s : Term) (t : Term) : Term :=
   match t with
-  | .var n => 
+  | .bvar n =>
       if n = v then s
-      else if n > v then .var (n - 1)
-      else .var n
+      else if n > v then .bvar (n - 1)
+      else .bvar n
+  | .fvar x => .fvar x
   | .func f ts => .func f (substTerms v s ts)
 
 def substTerms (v : Nat) (s : Term) (ts : List Term) : List Term :=
@@ -93,6 +99,7 @@ end
 def substFormula (v : Nat) (s : Term) (f : Formula) : Formula :=
   match f with
   | .bottom => .bottom
+  | .eq t1 t2 => .eq (substTerm v s t1) (substTerm v s t2)
   | .atom p ts => .atom p (substTerms v s ts)
   | .impl f1 f2 => .impl (substFormula v s f1) (substFormula v s f2)
   | .forall f1 => .forall (substFormula (v + 1) (liftTerm 0 s) f1)
@@ -164,7 +171,7 @@ inductive Derives : List Formula → Formula → Prop where
   -- Reglas estándar de Deducción Natural
   | intro_impl : ∀ Γ A B, Derives (A :: Γ) B → Derives Γ (.impl A B)
   | elim_impl  : ∀ Γ A B, Derives Γ (.impl A B) → Derives Γ A → Derives Γ B
-  
+
   -- Reglas de conjunción
   | intro_and  : ∀ Γ A B, Derives Γ A → Derives Γ B → Derives Γ (.and A B)
   | elim_and_l : ∀ Γ A B, Derives Γ (.and A B) → Derives Γ A
@@ -184,6 +191,10 @@ inductive Derives : List Formula → Formula → Prop where
 
   -- Lógica Intuicionista (Ex Falso Quodlibet)
   | bot_elim : ∀ Γ A, Derives Γ ⊥ → Derives Γ A
+
+  -- Reglas de Igualdad
+  | eq_refl  : ∀ Γ t, Derives Γ (.eq t t)
+  | eq_subst : ∀ Γ A t1 t2, Derives Γ (.eq t1 t2) → Derives Γ (substFormula 0 t1 A) → Derives Γ (substFormula 0 t2 A)
 
   -- Debilitamiento (Weakening)
   | weakening : ∀ Γ Γ' f, Derives Γ f → (∀ x, x ∈ Γ → x ∈ Γ') → Derives Γ' f

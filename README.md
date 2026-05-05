@@ -1,4 +1,4 @@
-# ProjectName
+# Lógica de Primer Orden con Igualdad (FOL=) en Lean 4
 
 [![Lean 4](https://img.shields.io/badge/Lean-v4.28.0-blue)](https://leanprover.github.io/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](CURRENT-STATUS-PROJECT.md)
@@ -7,28 +7,33 @@
 
 > **Status**: See [CURRENT-STATUS-PROJECT.md](CURRENT-STATUS-PROJECT.md) for complete details
 
-Una implementación formal de la **Lógica de Primer Orden (FOL)** en Lean 4, construida completamente desde cero sin dependencias de Mathlib.
+Una formalización matemática profunda y rigurosa de la **Lógica de Primer Orden con Igualdad (FOL=)** en Lean 4. Construida completamente desde cero, **sin dependencias externas** (ni siquiera de Mathlib), alcanzando el **100% de demostraciones completadas (0 sorries)**.
 
-## Description
+## 📖 Introducción
 
-Este proyecto formaliza la sintaxis, semántica y metamatemática de la Lógica de Primer Orden clásica. El objetivo ha sido proporcionar una base rigurosa, computacionalmente clara y matemática del comportamiento del razonamiento lógico formal.
+Este proyecto no es solo una sintaxis; es una recreación desde los primeros principios de cómo funciona la matemática deductiva. Formaliza la **sintaxis**, el sistema de **Deducción Natural**, la **semántica de Tarski** y los **Metateoremas Universales** que gobiernan la lógica de primer orden clásica.
 
-**Características principales:**
+El objetivo ha sido proporcionar una base computacionalmente limpia y verificada algorítmicamente por el kernel de Lean 4 sobre el comportamiento del razonamiento lógico formal.
 
-- **Sintaxis Rigurosa**: Implementación de fórmulas y términos mediante índices de De Bruijn, resolviendo elegantemente el problema de la captura de variables en cuantificadores ($\forall, \exists$).
-- **Sistema Deductivo**: Formalización de un sistema de Deducción Natural extendido con reglas de reescritura locales.
-- **Automatización (Metaprogramación)**: Desarrollo de tácticas (`derive_hyp`, `derive_weaken`, `derive_rewrite`) utilizando el framework `MetaM` de Lean 4 para agilizar demostraciones.
-- **Semántica Tarskiana**: Definición precisa de Modelos, funciones de evaluación y la noción de satisfacción lógica ($\Gamma \models f$).
+## ✨ Características Principales
 
-**Hitos Metamatemáticos Demostrados:**
+- **Sintaxis Blindada (De Bruijn)**: Implementación de fórmulas y términos mediante índices de De Bruijn. Esto elimina de raíz el problema matemático de la captura y colisión de variables (alfa-equivalencia) en los cuantificadores ($\forall, \exists$).
+- **Sistema Deductivo de Vanguardia**: Formalización de un sistema de Deducción Natural completo, extendido nativamente con el axioma de Sustitución de Leibniz para la Igualdad (`eq_subst`) y mecanismos de reescritura de subfórmulas (`LocalRule`).
+- **Automatización Integrada**: Uso nativo de metaprogramación (`MetaM`) y macros en Lean 4 para dotar al sistema de tácticas inteligentes (`derive_hyp`, `derive_weaken`, `derive_refl`, `derive_raa`), haciendo las pruebas fluidas.
+- **Semántica de Modelos Cocientes**: Definición rigurosa de Modelos semánticos y funciones de evaluación, soportando dominios basados en **Clases de Equivalencia (`Quotient`)** para interpretar la identidad matemática de la igualdad.
 
-1. Tautologías clásicas y equivalencias (Doble Negación, De Morgan, Dualidad de Cuantificadores).
-2. **Teorema de Deducción**.
-3. **Teorema de Corrección (Soundness Theorem)**: $\Gamma \vdash A \implies \Gamma \models A$.
-4. **Construcción de Henkin y Lema de Lindenbaum**.
-5. **Teorema de Completitud de Gödel**: $\Gamma \models A \implies \Gamma \vdash A$.
+## 🏆 Hitos Metamatemáticos Demostrados
 
-## Modules
+Este repositorio contiene pruebas 100% formalizadas en código de los pilares de la metamatemática moderna:
+
+1. **Equivalencias Lógicas (Nivel Objeto):** Doble Negación, Leyes de De Morgan, Dualidad de Cuantificadores, Congruencia de la Igualdad.
+2. **Teorema de Deducción:** $\Gamma, A \vdash B \implies \Gamma \vdash A \Rightarrow B$.
+3. **Teorema de Corrección (Soundness):** $\Gamma \vdash A \implies \Gamma \models A$.
+4. **Lema de Lindenbaum y Construcción de Henkin:** Todo conjunto consistente se puede extender a un conjunto máximamente consistente con testigos existenciales.
+5. **Teorema de Completitud de Gödel:** $\Gamma \models A \implies \Gamma \vdash A$.
+6. **Teorema de Compacidad:** Un conjunto infinito de fórmulas tiene modelo si y solo si todo subconjunto finito lo tiene.
+
+## 📂 Arquitectura del Proyecto
 
 | Module | Namespace | Dependencies | Status |
 |--------|-----------|--------------|--------|
@@ -40,23 +45,25 @@ Este proyecto formaliza la sintaxis, semántica y metamatemática de la Lógica 
 | `Soundness.lean` | `FOL.Metamath.Soundness` | `Semantics.lean`, `Tactics.lean` | ✅ Complete |
 | `Completeness.lean` | `FOL.Metamath.Completeness` | `Semantics.lean`, `Deduction.lean` | ✅ Complete |
 | `Compacity.lean` | `FOL.Metamath.Compacity` | `Completeness.lean`, `Soundness.lean` | ✅ Complete |
+| `Eq.lean` | `FOL.Theorems.Eq` | `FOL.lean`, `Tactics.lean` | ✅ Complete |
 
-## Project Structure
+### Estructura de Directorios
 
 ```text
 FOL/
-├── Prelim.lean              # Preliminary definitions
-├── FOL.lean                 # Syntax, De Bruijn, and Natural Deduction
-├── Tactics.lean             # Metaprogramming macros
-├── Deduction.lean           # Deduction Theorem
-├── Semantics.lean           # Semantic evaluation & Models
-├── Soundness.lean           # Soundness Theorem
-├── Completeness.lean        # Gödel's Completeness Theorem & Henkin construction
-├── Compacity.lean           # Compactness & Consistency Theorems
-└── Theorems/                # Logical equivalences & tautologies
+├── Prelim.lean              # Fundamentos axiomáticos
+├── FOL.lean                 # Sintaxis De Bruijn y Deducción Natural (Γ ⊢ f)
+├── Tactics.lean             # Macros de automatización (MetaM)
+├── Deduction.lean           # Teorema de Deducción
+├── Semantics.lean           # Evaluación Semántica, Modelos y Lógica de Cocientes (Γ ⊨ f)
+├── Soundness.lean           # Teorema de Corrección
+├── Completeness.lean        # Modelo Canónico de Henkin y Completitud
+├── Compacity.lean           # Teorema de Compacidad y Consistencia
+└── Theorems/                # Demostraciones de Nivel Objeto
     ├── Impl.lean
     ├── Neg.lean
     ├── Derived.lean
+    ├── Eq.lean
     └── Quantifiers.lean
 ```
 

@@ -50,3 +50,9 @@ syntax "derive_raa" : tactic
 
 macro_rules
   | `(tactic| derive_raa) => `(tactic| apply Derives.raa)
+
+-- Tactic to automate Reflexivity of Equality
+syntax "derive_refl" : tactic
+
+macro_rules
+  | `(tactic| derive_refl) => `(tactic| apply Derives.eq_refl)

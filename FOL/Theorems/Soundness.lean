@@ -5,20 +5,23 @@ License: MIT
 -/
 
 import FOL.FOL
-import FOL.Semantics
+import FOL.Semantics.Basic
+import FOL.MetaTheory.Soundness
 
 namespace FOL.Theorems.Soundness
-open FOL.Semantics
+open FOL.Metamath.Semantics
+
+local notation:50 Γ " ⊨ " f => FOL.Metamath.Semantics.satisfies Γ f
 
 -- ============================================================
 -- Teorema de Corrección (Soundness) - Fase 5 (Opción B)
 -- ============================================================
 -- Demuestra que si Γ ⊢ f (sintácticamente demostrable), 
 -- entonces Γ ⊨ f (semánticamente válido).
--- Su demostración se realiza por inducción estructural sobre
--- el árbol de derivación (h : Γ ⊢ f).
+--
+-- La demostración completa está en FOL.Soundness
 
-theorem soundness {Γ f} (h : Γ ⊢ f) : Γ ⊨ f := by
-  sorry
+theorem soundness {Γ f} (h : Γ ⊢ f) : Γ ⊨ f :=
+  FOL.Metamath.Soundness.soundness h
 
 end FOL.Theorems.Soundness
