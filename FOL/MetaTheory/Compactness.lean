@@ -53,4 +53,7 @@ theorem compactness_theorem (S : Formula → Prop) :
 
 end FOL.Metamath.Compacity
 
-export FOL.Metamath.Compacity (consistency_of_satisfiable compactness_theorem)
+export FOL.Metamath.Compacity (
+  consistency_of_satisfiable
+  compactness_theorem
+)
