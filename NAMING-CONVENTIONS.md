@@ -1,264 +1,386 @@
-# Naming Conventions — Mathlib Style
+Convenciones de Nombres — Estilo Estricto Mathlib
 
-> Permanent reference document for this project.
-> All rules are based on the
-> [Mathlib Naming Conventions](https://leanprover-community.github.io/contribute/naming.html),
-> adapted to the project's specific domain.
+Documento de referencia permanente para este proyecto.
+Todas las reglas se basan estrictamente en las Mathlib Naming Conventions.
 
-**Last updated:** 2025-01-01 00:00
-**Author**: Your Name
+Última actualización: YYYY-MM-DD
+Autor: [Nombre del Autor]
 
----
+1. La Regla de Oro: Ante la duda, busca en Mathlib
 
-## 1. Capitalization Rules
+Este documento cubre el 95% de los casos de uso diario, pero la matemática formal es vasta. Si te enfrentas a un concepto, teorema o estructura cuyo nombre no encaja de forma obvia en las reglas de este documento, NO inventes un nombre. En su lugar, el asistente de IA o el desarrollador debe buscar el equivalente en el repositorio de Mathlib (por ejemplo, examinando cómo se nombra en Data.Set.Basic, Data.Nat.Basic, etc.) y sugerir adoptar exactamente esa misma nomenclatura. El objetivo es emular Mathlib con precisión quirúrgica.
 
-| Declaration type | Convention | Example |
-|------------------|------------|---------|
-| Theorems, lemmas (Prop terms) | `snake_case` | `union_comm`, `mem_powerset_iff` |
-| Types, Props, Structures, Classes | `UpperCamelCase` | `IsFunction`, `IsNat`, `BoolAlg.Basic` |
-| Functions returning `Type` | by return type | `powerset` (→ U → `snake`), `IsNat` (→ Prop → `Upper`) |
-| Other `Type` terms | `lowerCamelCase` | `successor`, `fromPeano`, `binUnion` |
-| Acronyms | as group upper/lower | `ZFC` (namespace), `zfc` (in snake_case) |
+1. Reglas Generales de Capitalización
 
----
+Tipo de declaración
 
-## 2. Symbol-to-Word Dictionary
+Convención
 
-| Symbol | In names | Notes |
-|--------|----------|-------|
-| ∈ | `mem` | `x ∈ A` → `mem` |
-| ∉ | `not_mem` | |
-| ∪ | `union` | binary |
-| ∩ | `inter` | binary |
-| ⋃ | `sUnion` | `s` = "set of sets" |
-| ⋂ | `sInter` | idem |
-| ⊆ | `subset` | non-strict |
-| ⊂ | `ssubset` | strict (extra `s`) |
-| 𝒫 | `powerset` | |
-| σ | `succ` | |
-| ∅ | `empty` | |
-| △ | `symmDiff` | |
-| ᶜ | `compl` | complement |
-| \ | `sdiff` | set difference |
-| ×ₛ | `prod` | cartesian product |
-| ⟂ | `disjoint` | |
-| = | `eq` | often omitted |
-| ≠ | `ne` | |
-| → | `of` / implicit | conclusion goes first |
-| ↔ | `iff` | suffix |
-| ¬ | `not` | |
-| ∃ | `exists` | |
-| ∀ | `forall` | |
-| ∘ | `comp` | composition |
-| ⁻¹ | `inv` | inverse |
-| + | `add` | |
-| \* / · | `mul` | |
-| − | `sub` (binary) / `neg` (unary) | |
-| ^ | `pow` | |
-| / | `div` | |
-| ∣ | `dvd` | divides |
-| ≤ | `le` | |
-| < | `lt` | |
-| ≥ | `ge` | only for argument swap |
-| > | `gt` | only for argument swap |
-| 0 | `zero` | |
-| 1 | `one` | |
+Ejemplo
 
----
+Teoremas, lemas (retornan Prop)
 
-## 3. Name Formation Rules (12 rules)
+snake_case
 
-### RULE 1 — Conclusion first, hypotheses with `_of_`
+union_comm, mem_powerset_iff
 
-The name describes **what is proved**, not how. Hypotheses are added with `_of_`:
+Types, Props, Structures, Classes
 
-```
--- Pattern: A → B → C
--- Name:    c_of_a_of_b
--- Order:   conclusion_of_hypothesis1_of_hypothesis2
+UpperCamelCase
 
--- Example:
--- Theorem: isNat n → isNat (σ n)
--- Name:    isNat_succ_of_isNat
---          ^^^^^^^^^ ^^^^^^^^^^
---          conclusion hypothesis
-```
+IsFunction, IsNat, ExistsUnique
 
-### RULE 2 — Biconditionals carry suffix `_iff`
+Funciones que retornan Type
 
-```
--- Theorem: x ∈ (𝒫 A) ↔ x ⊆ A
--- Name:    mem_powerset_iff
---          ^^^ ^^^^^^^^ ^^^
---          ∈    𝒫        ↔
-```
+Por tipo de retorno
 
-### RULE 3 — Eliminate `_wc` — Use `.mp` / `.mpr` or `_of_`
+powerset (→ Type → snake), IsNat (→ Prop → Upper)
 
-The `_wc` suffix (if used historically) is replaced by Mathlib convention:
+Constructores / valores (Type)
 
-```
--- For forward direction of an iff:
---    inter_eq_empty_iff_disjoint.mp
--- For backward direction:
---    inter_eq_empty_iff_disjoint.mpr
--- As standalone theorem:
---    disjoint_of_inter_eq_empty    (conclusion_of_hypothesis)
-```
+lowerCamelCase
 
-### RULE 4 — Algebraic properties → short axiomatic name
+cero, succ, insertarOrdenado
 
-```
--- commutativity:   union_comm, inter_comm
--- associativity:   inter_assoc, union_assoc
--- absorption:      union_inter_self
--- distributivity:  union_inter_distrib_left
-```
+Acrónimos
 
-**Standard axiomatic suffixes (Mathlib):**
+Tratados como palabra
 
-| Suffix | Meaning | Example |
-|--------|---------|---------|
-| `_comm` | commutativity | `union_comm` |
-| `_assoc` | associativity | `inter_assoc` |
-| `_refl` | reflexivity | `subset_refl` |
-| `_irrefl` | irreflexivity | `ssubset_irrefl` |
-| `_symm` | symmetry | `disjoint_symm` |
-| `_trans` | transitivity | `subset_trans` |
-| `_antisymm` | antisymmetry | `subset_antisymm` |
-| `_asymm` | asymmetry | `ssubset_asymm` |
-| `_inj` | injectivity (iff) | `succ_inj` (σ a = σ b ↔ a = b) |
-| `_injective` | injectivity (pred) | `succ_injective` |
-| `_self` | operation with itself | `union_self` (A ∪ A = A) |
-| `_left` / `_right` | lateral variant | `union_subset_left` |
-| `_cancel` | cancellation | `add_left_cancel` |
-| `_mono` | monotonicity | `powerset_mono` |
+PROJECT_NAME (namespace), project_name (snake_case)
 
-### RULE 5 — Predicates as prefix, operations in infix order
+1. Diccionario Universal de Símbolos
 
-```
--- Predicate as prefix:   isNat_zero (not zero_is_nat)
--- Exception:             succ_injective (_injective, _surjective are always suffix)
-```
+Símbolo
 
-### RULE 6 — Standard abbreviations for frequent conditions
+Palabra en nombres
 
-| Instead of | Use | Meaning |
-|-----------|-----|---------|
-| `zero_lt_x` | `pos` | x > 0 |
-| `x_lt_zero` | `neg` | x < 0 |
-| `x_le_zero` | `nonpos` | x ≤ 0 |
-| `zero_le_x` | `nonneg` | x ≥ 0 |
+Notas / Ejemplos
 
-### RULE 7 — Definitions with `Is` for Prop predicates
+∈ / ∉
 
-```
--- Definition (Prop): def IsNat (n : U) : Prop := ...     (UpperCamelCase)
--- In theorem names:  isNat_zero, isNat_succ, isNat_of_mem (lowerCamelCase in snake_case)
-```
+mem / not_mem
 
-### RULE 8 — Functions/constructors non-Prop: `lowerCamelCase`
+mem_succ_iff
 
-```
--- powerset (not PowerSetOf)  — lowerCamelCase, remove "Of"
--- union (not BinUnion)       — "Bin" removed (binary by arity)
--- sep (not SpecSet)          — "sep" = Mathlib standard for separation
--- comp (not FunctionComposition)
--- image (not ImageSet)
-```
+∪ / ∩
 
-### RULE 9 — Specifications: `_iff` and `mem_X_iff`
+union / inter
 
-The pattern `X_is_specified` is replaced by `mem_X_iff`:
+Operaciones binarias
 
-```
--- mem_succ_iff      (was: successor_is_specified)
--- mem_inter_iff     (was: BinInter_is_specified)
--- mem_union_iff     (was: BinUnion_is_specified)
--- mem_sep_iff       (was: SpecSet_is_specified)
--- mem_sdiff_iff     (was: Difference_is_specified)
-```
+⋃ / ⋂
 
-### RULE 10 — Uniqueness and existence
+sUnion / sInter
 
-```
--- inter_unique      (was: BinInterUniqueSet)
--- powerset_unique   (was: PowerSetExistsUnique)
--- sUnion_unique     (was: UnionExistsUnique)
-```
+s = "set of sets"
 
-### RULE 11 — Names with `_left` / `_right`
+⊆ / ⊂
 
-```
--- subset_union_left    — A ⊆ (A ∪ B), subset is left argument
--- subset_union_right   — B ⊆ (A ∪ B), subset is right argument
-```
+subset / ssubset
 
-### RULE 12 — Named theorems (proper names)
+⊂ lleva una "s" extra por estricto
 
-```
--- cantor_no_surjection          — proper name + description (OK in Mathlib)
--- cantor_schroeder_bernstein    — proper name (kept as-is)
-```
+𝒫
 
-> **NOTE:** Mathematical proper names are kept as-is in Mathlib.
-> Only operational words are normalized (`mem`, `union`, etc.).
+powerset
 
----
+Sin "Of"
 
-## 4. Quick Reference Tables
+σ
 
-### 4.1 Definitions — common renamings
+succ
 
-| Before | After | Rationale |
-|--------|-------|-----------|
-| `BinInter` | `inter` | remove "Bin" |
-| `BinUnion` | `union` | remove "Bin" |
-| `PowerSetOf` | `powerset` | lowerCamelCase, remove "Of" |
-| `UnionSet` | `sUnion` | "s" = set-of-sets |
-| `SpecSet` | `sep` | Mathlib standard |
-| `successor` | `succ` | standard abbreviation |
-| `FunctionComposition` | `comp` | standard abbreviation |
-| `IdFunction` | `id` | standard abbreviation |
-| `InverseFunction` | `inv` | standard abbreviation |
-| `ImageSet` | `image` | simplification |
-| `PreimageSet` | `preimage` | simplification |
-| `Restriction` | `restrict` | simplification |
-| `isNat` | `IsNat` | UpperCamelCase (Prop) |
-| `isSingleValued` | `IsSingleValued` | UpperCamelCase (Prop) |
-| `isInductive` | `IsInductive` | UpperCamelCase |
+Sucesor
 
-### 4.2 Theorems — `_is_specified` → `mem_X_iff`
+∅
 
-| Before | After | Breakdown |
-|--------|-------|-----------|
-| `PowerSet_is_specified` | `mem_powerset_iff` | mem + 𝒫 + ↔ |
-| `successor_is_specified` | `mem_succ_iff` | mem + σ + ↔ |
-| `BinInter_is_specified` | `mem_inter_iff` | mem + ∩ + ↔ |
-| `BinUnion_is_specified` | `mem_union_iff` | mem + ∪ + ↔ |
-| `SpecSet_is_specified` | `mem_sep_iff` | mem + sep + ↔ |
+empty o zero
 
-### 4.3 Theorems — algebraic properties
+Depende del contexto de la teoría
 
-| Before | After | Breakdown |
-|--------|-------|-----------|
-| `BinUnion_commutative` | `union_comm` | ∪ + commutativity |
-| `BinInter_commutative` | `inter_comm` | ∩ + commutativity |
-| `BinInter_associative` | `inter_assoc` | ∩ + associativity |
-| `subseteq_reflexive` | `subset_refl` | ⊆ + reflexivity |
-| `subseteq_transitive` | `subset_trans` | ⊆ + transitivity |
-| `subseteq_antisymmetric` | `subset_antisymm` | ⊆ + antisymmetry |
+△ / ᶜ / \
 
----
+symmDiff / compl / sdiff
 
-## 5. Migration Note
+Diferencia simétrica, complemento, resta
 
-During development, names are renamed progressively following these conventions.
-Priority order for migration:
+×ₛ
 
-1. Base modules (axioms): `Extension`, `Specification`, `Union`, `PowerSet`
-2. Natural numbers: `Nat.Basic` + arithmetic modules
-3. Functions and relations: `Functions`, `Relations`
-4. Derived structures: Boolean algebras, cardinality, etc.
+prod
 
-Each rename is verified with full compilation before proceeding.
+Producto cartesiano
+
+⟂
+
+disjoint
+
+Conjuntos disjuntos
+
+↔ / ¬
+
+iff / not
+
+iff siempre va como sufijo
+
+∃ / ∀
+
+exists / forall
+
+∘ / ⁻¹
+
+comp / inv
+
+Composición, Inversa
+
++ / * / -
+
+add / mul / sub
+
+sub para binario, neg para unario
+
+^ / / / ∣
+
+pow / div / dvd
+
+dvd = divide
+
+≤ / <
+
+le / lt
+
+≥ / >
+
+ge / gt
+
+Solo usar para versiones con argumentos intercambiados
+
+0 / 1
+
+zero / one
+
+1. Las 13 Reglas de Formación de Nombres
+
+REGLA 1: Conclusión primero, hipótesis con _of_
+
+El nombre describe qué se demuestra, no el camino para llegar a ello.
+
+Mal: element_is_property (isProperty n → m ∈ n → isProperty m)
+
+Bien: isProperty_of_isProperty_of_mem (Conclusión: isProperty, Hipótesis: isProperty, mem)
+
+REGLA 2: Bicondicionales llevan el sufijo _iff
+
+Si el teorema es una equivalencia (↔), el sufijo _iff es obligatorio.
+
+Mal: BinInter_empty (x ∩ y = ∅ ↔ x ⟂ y)
+
+Bien: inter_eq_empty_iff_disjoint
+
+REGLA 3: Prohibido _wc — Usar .mp, .mpr o _of_
+
+Los sufijos heredados como _wc (weak condition) están prohibidos.
+Si tienes A ↔ B, usa theorem.mp (A → B) o theorem.mpr (B → A). Si creas un lema separado unidireccional, aplica la Regla 1 (_of_).
+
+Mal: ExtSet_wc (A ⊆ B → B ⊆ A → A = B)
+
+Bien: eq_of_subset_of_subset
+
+REGLA 4: Sufijos axiomáticos estándar para propiedades algebraicas
+
+En lugar de deletrear la propiedad, usa los sufijos estándar:
+
+_comm (conmutatividad): union_comm
+
+_assoc (asociatividad): inter_assoc
+
+_self (idempotencia/identidad): union_self (A ∪ A = A)
+
+_left /_right (variantes laterales): union_subset_left
+
+_refl,_symm, _trans,_antisymm, _cancel,_mono, _inj (inyectividad).
+
+REGLA 5: Predicados como prefijo, operaciones en orden infijo
+
+Mal: zero_is_nat
+
+Bien: isNat_zero
+
+Excepción: Los predicados de morfismos (_injective,_surjective, _bijective) siempre van como sufijo (ej. succ_injective).
+
+REGLA 6: Abreviaturas estándar para inecuaciones
+
+x > 0 → pos
+
+x < 0 → neg
+
+x ≥ 0 → nonneg
+
+x ≤ 0 → nonpos
+
+REGLA 7: El prefijo Is en mayúscula para definiciones Prop
+
+Las definiciones que retornan Prop deben ser UpperCamelCase.
+
+Mal: def isSingleValued ...
+
+Bien: def IsSingleValued ...
+
+Nota: En los teoremas que los usan, vuelven a snake_case en minúscula: isSingleValued_empty.
+
+REGLA 8: Funciones y constructores (no Prop) en lowerCamelCase
+
+Cualquier función o constructor que retorne datos (universo, números, listas) usa lowerCamelCase. No prefijar tipos.
+
+Mal: PowerSetOf, BinUnion, UnionSet
+
+Bien: powerset, union, sUnion
+
+REGLA 9: Especificaciones como mem_X_iff
+
+Para axiomas o teoremas que definen la membresía de un conjunto, usar este patrón en lugar de _is_specified.
+
+Mal: SpecSet_is_specified (x ∈ {z ∈ A | P} ↔ x ∈ A ∧ P x)
+
+Bien: mem_sep_iff, mem_powerset_iff, mem_union_iff
+
+REGLA 10: Existencia y Unicidad
+
+Si un teorema demuestra ∃!, usar el sufijo _unique.
+
+Mal: BinInterUniqueSet
+
+Bien: inter_unique, powerset_unique
+
+REGLA 11: Variantes laterales _left y_right
+
+Usadas para indicar qué lado de una operación es el afectado.
+
+Ejemplo: add_le_add_left (si a ≤ b, entonces c + a ≤ c + b).
+
+Ejemplo: subset_union_left (A ⊆ A ∪ B).
+
+REGLA 12: Nombres Propios
+
+Los teoremas con nombres matemáticos históricos mantienen sus nombres propios.
+
+Bien: cantor_schroeder_bernstein, cantor_no_surjection.
+
+REGLA 13: Sufijos de Dominio (Evitar colisiones)
+
+Cuando se construyen estructuras avanzadas y se quieren evitar colisiones con operaciones nativas (como Nat.*), se debe añadir un sufijo en mayúscula.
+
+Ejemplos:
+
+Estructura Z: addZ, mulZ, leZ, isPositiveZ.
+
+Estructura Q: addQ, mulQ, isPositiveQ.
+
+Nota: Predicados como isPositiveZ bajan a minúscula inicial porque el sufijo de dominio ya actúa como demarcador.
+
+1. Estructura de Archivos, Directorios y Módulos
+
+La jerarquía de archivos debe reflejar la jerarquía matemática y organizativa de manera predecible.
+
+Nombres de archivos y directorios: Siempre en UpperCamelCase.
+
+Mapeo de Módulos: La ruta del archivo define exactamente el nombre del módulo.
+
+Un archivo en Data/Set/Basic.lean se declara automáticamente como el módulo Data.Set.Basic.
+
+Archivos Basic.lean: El archivo que contiene las definiciones fundamentales y las propiedades más elementales de una estructura debe llamarse Basic.lean (ej. NumberTheory/Basic.lean).
+
+Archivos Lemmas.lean o temáticos: Las propiedades derivadas más avanzadas se separan en archivos descriptivos (ej. Order.lean, Equiv.lean).
+
+1. Espacios de Nombres (Namespaces)
+
+Convención de nombre: Los namespaces usan UpperCamelCase (ej. Peano, ZFC, Polynomial).
+
+Regla de No Redundancia (CRÍTICA): Nunca repitas el nombre del namespace en los teoremas o definiciones que contiene. El sistema de Lean ya provee el prefijo cuando se usa desde fuera.
+
+Contexto: Estás dentro de namespace Set.
+
+Mal: theorem set_subset_refl ... (desde fuera se vería como Set.set_subset_refl).
+
+Bien: theorem subset_refl ... (desde fuera se ve limpio como Set.subset_refl).
+
+Apertura y Cierre: Siempre cierra un namespace de forma explícita para evitar confusiones de alcance: end MiNamespace.
+
+Bloques de variables: Los bloques variable se declaran típicamente justo después de abrir el namespace.
+
+1. Diccionario Estándar de Variables
+
+Para mantener la consistencia en todas las firmas de teoremas, Mathlib utiliza un conjunto estandarizado de letras para los nombres de variables según su tipo.
+
+Tipo de Objeto
+
+Letras Preferidas
+
+Ejemplo de uso en código
+
+Tipos (Types/Sorts)
+
+α, β, γ, δ, ι (Griegas)
+
+variable {α β : Type}
+
+Elementos Genéricos
+
+x, y, z, a, b, c
+
+∀ x y : α, x = y
+
+Naturales / Enteros
+
+m, n, k, i, j
+
+∀ n : ℕ, n < succ n
+
+Funciones
+
+f, g, h
+
+f : α → β
+
+Conjuntos (Mathlib Set)
+
+s, t, u (Minúsculas)
+
+s ⊆ t
+
+Conjuntos (Teoría Axiomática Pura)
+
+A, B, C, X, Y (Mayúsculas)*
+
+A ⊆ A ∪ B
+
+Proposiciones / Pruebas
+
+p, q, r o h, h₁, h₂
+
+(h : p ∧ q)
+
+Predicados (Prop-valued fun)
+
+P, Q, R
+
+P : α → Prop
+
+Universos (Universes)
+
+u, v, w
+
+universe u
+
+(Nota: En Mathlib estándar los conjuntos son s, t. Si el proyecto es fundamentalmente sobre Teoría de Conjuntos pura —como ZFC o Peano— usar A, B, C es aceptable si facilita la lectura de fórmulas complejas, pero debe mantenerse de manera consistente).
+
+1. Clases de Tipos (Typeclasses)
+
+Nomenclatura: Las Typeclasses se escriben en UpperCamelCase.
+
+Semántica: Preferiblemente deben ser un sustantivo (para estructuras) o un adjetivo (para propiedades).
+
+Estructura: Group, Ring, TopologicalSpace.
+
+Propiedad: DecidableEq, IsCommutative, Fintype.
+
+No incluir sufijos redundantes como Class.
