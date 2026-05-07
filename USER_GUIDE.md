@@ -65,7 +65,7 @@ make update-toolchain
 
 Si necesitas una **versión específica**:
 ```bash
-make update-toolchain VERSION=v4.29.0
+make update-toolchain VERSION=v4.29.1
 ```
 
 ---
