@@ -3,8 +3,9 @@
 **Last updated:** 2025-01-01 00:00
 **Author**: Your Name
 
-> This file tracks planned development phases. Each phase includes
+> This file tracks planned development phases (short-to-medium term). Each phase includes
 > objectives, modules to create, dependencies, and estimated complexity.
+> For long-term goals and strategic roadmap, see [PLANNING.md](PLANNING.md).
 
 ---
 

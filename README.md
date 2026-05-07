@@ -80,7 +80,8 @@ bash gen-root.bash
 
 | Document | Purpose |
 |----------|---------|
-| [WORKFLOW.md](WORKFLOW.md) | ⭐ **Complete development workflow** (start here after setup) |
+| [USER_GUIDE.md](USER_GUIDE.md) | 🚀 **Start Here: How to use this template and its tools** |
+| [WORKFLOW.md](WORKFLOW.md) | ⭐ **Complete development workflow** |
 | [REFERENCE.md](REFERENCE.md) | Technical reference for all definitions and theorems |
 | [AI-GUIDE.md](AI-GUIDE.md) | Documentation standards, naming conventions, and AI assistant guide |
 | [NAMING-CONVENTIONS.md](NAMING-CONVENTIONS.md) | Full Mathlib-style naming dictionary and formation rules |
@@ -89,6 +90,7 @@ bash gen-root.bash
 | [DECISIONS.md](DECISIONS.md) | Architectural Decision Records (ADR) |
 | [CURRENT-STATUS-PROJECT.md](CURRENT-STATUS-PROJECT.md) | Current project status and metrics |
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Planned development phases |
+| [PLANNING.md](PLANNING.md) | Long-term roadmap and strategic goals |
 | [THOUGHTS.md](THOUGHTS.md) | Design journal and ideas |
 
 ## Naming Conventions

@@ -54,9 +54,8 @@ new:
 root:
 	@bash gen-root.bash
 
-## Update Lean toolchain: make update-toolchain VERSION=v4.29.0
+## Update Lean toolchain to latest (or specific version: make update-toolchain VERSION=v4.29.0)
 update-toolchain:
-	@[ -n "$(VERSION)" ] || (echo "Usage: make update-toolchain VERSION=v4.29.0" && exit 1)
 	@bash update-toolchain.bash $(VERSION)
 
 ## Show this help
