@@ -70,7 +70,36 @@ make update-toolchain VERSION=v4.29.1
 
 ---
 
-## 4. El Sistema de Bloqueo (Freeze / Lock)
+## 4. Bibliotecas Fundacionales (Librerías Externas)
+
+Si estás trabajando en lógica, teoría de conjuntos o aritmética, no necesitas empezar de cero. Esta plantilla viene pre-configurada (comentada) en el archivo `lakefile.lean` para conectarse con la colección de repositorios fundacionales de [julian1c2a en GitHub](https://github.com/julian1c2a).
+
+Dispones de acceso directo a los siguientes proyectos:
+- **Peano:** Aritmética de Peano sin Mathlib.
+- **FOL:** Lógica de Primer Orden (First-Order Logic).
+- **ZfcSetTheory:** Teoría de Conjuntos ZFC clásica.
+- **AczelSetTheory:** Teoría de Conjuntos con el Axioma de Anti-Fundación.
+- **Robinson:** Aritmética de Robinson (Q).
+- **TG:** Teoría de Conjuntos de Tarski-Grothendieck.
+- **MKplus:** Teoría de Conjuntos de Morse-Kelley (MK).
+- **MathFoundations (yFoundations):** Fundamentos matemáticos generales.
+
+### ¿Cómo activarlas?
+1. Abre el archivo `lakefile.lean`.
+2. Busca la sección `-- ── External dependencies (uncomment as needed) ──`.
+3. Descomenta las dos líneas de la librería que necesites (quitando los `-- `).
+   *Por ejemplo:*
+   ```lean
+   require ZfcSetTheory from git
+     "https://github.com/julian1c2a/ZfcSetTheory" @ "master"
+   ```
+4. En tu terminal, ejecuta `lake update` para descargarla.
+5. Ejecuta `make build` para compilar.
+6. ¡Listo! Ya puedes importar sus módulos en tu código, por ejemplo: `import ZfcSetTheory`.
+
+---
+
+## 5. El Sistema de Bloqueo (Freeze / Lock)
 
 Cuando terminas un archivo fundamental (como axiomas o definiciones base) y no quieres que tú (o la IA) lo modifique accidentalmente y rompa el resto del proyecto, debes "bloquearlo".
 
@@ -89,7 +118,7 @@ Cuando terminas un archivo fundamental (como axiomas o definiciones base) y no q
 
 ---
 
-## 5. El Ecosistema de Documentación
+## 6. El Ecosistema de Documentación
 
 Esta plantilla exige separar el código estricto de la documentación legible. Tienes a tu disposición varios archivos fundamentales:
 
@@ -102,7 +131,7 @@ Esta plantilla exige separar el código estricto de la documentación legible. T
 
 ---
 
-## 6. Comprobación Rápida de Estado
+## 7. Comprobación Rápida de Estado
 
 Si has estado trabajando un rato y quieres ver cómo está la salud de tu proyecto (archivos bloqueados y teoremas sin demostrar), ejecuta:
 ```bash
