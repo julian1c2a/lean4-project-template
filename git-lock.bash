@@ -123,7 +123,7 @@ case $COMMAND in
             exit 1
         fi
         if is_locked "$FILE"; then
-            grep -Fv "$FILE" "$LOCK_LIST" > "${LOCK_LIST}.tmp" && mv "${LOCK_LIST}.tmp" "$LOCK_LIST"
+            grep -Fv "$FILE" "$LOCK_LIST" > "${LOCK_LIST}.tmp"; mv "${LOCK_LIST}.tmp" "$LOCK_LIST"
             echo "Removed '$FILE' from $LOCK_LIST."
         else
             echo "Warning: '$FILE' was not in the lock list."
@@ -187,11 +187,11 @@ case $COMMAND in
         if ! is_frozen "$FILE"; then
             echo "Note: '$FILE' was not frozen."
         else
-            grep -Fv "$FILE" "$FROZEN_LIST" > "${FROZEN_LIST}.tmp" && mv "${FROZEN_LIST}.tmp" "$FROZEN_LIST"
+            grep -Fv "$FILE" "$FROZEN_LIST" > "${FROZEN_LIST}.tmp"; mv "${FROZEN_LIST}.tmp" "$FROZEN_LIST"
             echo "Removed '$FILE' from $FROZEN_LIST."
         fi
         if is_locked "$FILE"; then
-            grep -Fv "$FILE" "$LOCK_LIST" > "${LOCK_LIST}.tmp" && mv "${LOCK_LIST}.tmp" "$LOCK_LIST"
+            grep -Fv "$FILE" "$LOCK_LIST" > "${LOCK_LIST}.tmp"; mv "${LOCK_LIST}.tmp" "$LOCK_LIST"
             echo "Removed '$FILE' from $LOCK_LIST."
         fi
         if [ -f "$FILE" ]; then

@@ -1,23 +1,59 @@
-# Dependency Diagram — ProjectName
+# Diagrama de Dependencias — ProjectName
 
-**Last updated:** 2025-01-01 00:00
-**Author**: Your Name
+**Última actualización:** YYYY-MM-DD HH:MM
+**Autor**: [Nombre del Autor]
 
-## Project Structure
+> **Cuándo este fichero deja de ser útil tal cual**: pasado cierto tamaño (la
+> experiencia de proyectos hermanos sitúa el umbral en torno a 40-50 módulos), un
+> grafo módulo-a-módulo se queda desactualizado casi de inmediato y mantenerlo exige
+> regenerarlo por completo en cada sesión — coste que deja de compensar. Si tu
+> proyecto ha cruzado ese umbral:
+>
+> 1. Sustituye (o complementa) el grafo módulo-a-módulo de abajo por una **vista de
+>    nivel de subsistema** (capas: qué subsistema depende de qué subsistema, no qué
+>    fichero depende de qué fichero) — esa vista no se desactualiza al añadir módulos
+>    dentro de una capa ya existente.
+> 2. Añade una nota explícita de alcance histórico como esta, indicando desde cuándo el
+>    grafo detallado ya no es exhaustivo, y remite a `REFERENCE.md` (§1, la tabla de
+>    módulos) o a `lake graph` para el grafo completo y al día.
+> 3. **No borres el grafo antiguo ni mientas sobre su vigencia** — una nota honesta de
+>    "esto documenta solo la fase inicial" es preferible a dejarlo pasar por completo
+>    y actualizado cuando no lo es.
 
+---
+
+## Vista de Nivel de Subsistema (opcional, recomendada a partir de ~40 módulos)
+
+Diagrama estable de dependencias entre subsistemas (las flechas indican "depende de").
+A diferencia del grafo módulo-a-módulo de abajo, esta vista no se desactualiza al
+añadir módulos dentro de una capa ya existente.
+
+```text
+(ejemplo — sustituir por las capas reales del proyecto)
+Prelim/  ──►  Core/  ──►  Nat/  ──►  Algebra/
+                                        │
+                          ┌─────────────┤
+                          ▼             ▼
+                     GroupTheory/   Topology/
 ```
+
+---
+
+## Estructura del Proyecto
+
+```text
 ProjectName/
-├── Prelim.lean         # Preliminary definitions
-├── _template.lean      # Module template (not imported)
-├── Core/               # (subdirectory example)
+├── Prelim.lean         # Definiciones preliminares
+├── _template.lean      # Plantilla de módulo (no se importa)
+├── Core/                # (ejemplo de subdirectorio)
 │   └── Basic.lean
-└── Topic/              # (subdirectory example)
+└── Topic/               # (ejemplo de subdirectorio)
     ├── Basic.lean
     └── Advanced.lean
-ProjectName.lean        # Root module
+ProjectName.lean        # Módulo raíz
 ```
 
-## Dependency Graph
+## Grafo de Dependencias (módulo a módulo)
 
 ```mermaid
 graph TD
@@ -25,7 +61,8 @@ graph TD
     Z[ProjectName.lean] --> P
 ```
 
-*(Update this diagram as modules are added. Use subdirectory grouping:)*
+*(Actualizar este diagrama a medida que se añaden módulos. Para más de ~15 nodos,
+agrupar por subdirectorio con `subgraph`:)*
 
 ```mermaid
 graph TD
@@ -47,63 +84,73 @@ graph TD
     Z --> TA
 ```
 
-## Namespace Hierarchy
+## Jerarquía de Namespaces
 
-### 1. **ProjectName** (root)
+### 1. **ProjectName** (raíz)
 
 ```lean
--- ProjectName.lean imports all modules
+-- ProjectName.lean importa todos los módulos
 ```
 
 ### 2. **ProjectName.Prelim**
 
 ```lean
 namespace ProjectName.Prelim
-  -- Preliminary definitions
+  -- Definiciones preliminares
 ```
 
-*(Add sub-namespaces as subdirectories are created)*
+*(Añadir sub-namespaces a medida que se crean subdirectorios)*
 
-## Dependencies by Level
+## Dependencias por Nivel
 
-### Level 0: Foundations
+### Nivel 0: Fundamentos
 
-- `Prelim.lean` — no dependencies
+- `Prelim.lean` — sin dependencias
 
-### Level 1: Core
+### Nivel 1: Núcleo
 
-- *(modules that depend only on Prelim)*
+- *(módulos que dependen solo de Prelim)*
 
-### Level 2: Derived
+### Nivel 2: Derivado
 
-- *(modules that depend on Level 1)*
+- *(módulos que dependen del Nivel 1)*
 
-### Level N: Root
+### Nivel N: Raíz
 
-- `ProjectName.lean` — imports all modules
+- `ProjectName.lean` — importa todos los módulos
 
-## Exports by Module
+## Exportaciones por Módulo
 
 ### Prelim.lean
 
 ```lean
 export ProjectName.Prelim (
-  -- exported names here
+  -- nombres exportados aquí
 )
 ```
 
-## Design Notes
+## Tabla resumen de exportaciones (recomendada a partir de ~10 módulos)
 
-1. **Separation of concerns**: each module handles one aspect
-2. **Minimal dependencies**: only import what is strictly needed
-3. **Selective exports**: only public definitions and theorems are exported
-4. **No Mathlib** (unless explicitly required — add to lakefile.lean)
-5. **One namespace per module**: mirrors file path (see ADR-005)
+| Módulo | # definiciones públicas | # teoremas exportados |
+|---|---:|---:|
+| `Prelim` | 0 | 0 |
 
-## Verification Commands
+## Notas de Diseño
+
+1. **Separación de responsabilidades**: cada módulo trata un aspecto.
+2. **Dependencias mínimas**: importar solo lo estrictamente necesario; `open`
+   selectivo.
+3. **Exportaciones selectivas**: solo definiciones y teoremas públicos se exportan
+   (ver `AI-GUIDE.md` §17).
+4. **Sin Mathlib** (ADR-001 en `DECISIONS.md`), salvo que se declare explícitamente lo
+   contrario.
+5. **Un namespace por módulo**: refleja la ruta del fichero (ver ADR-005).
+
+## Comandos de Verificación
 
 ```bash
-make build          # build full project
-make sorry          # check for sorry
-make status         # lock status + sorry
+lake build                        # build completo del proyecto
+lake graph                        # grafo de dependencias real y completo (Lake nativo)
+bash check-sorry.bash             # comprobar sorry restantes
+make status                       # estado de bloqueo + sorry (si el Makefile lo define)
 ```

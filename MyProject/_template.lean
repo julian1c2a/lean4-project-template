@@ -20,6 +20,9 @@ import ProjectName.Prelim
 --   ExistsUnique.intro / .exists / .choose / .choose_spec / .unique
 --   choose_unique / choose_spec_unique / choose_uniq  (Peano-compatible)
 --   Classical.*   (via open Classical in Prelim)
+--   ⚠️ Check DECISIONS.md §MANDATORIES before using Classical.* — some projects
+--      forbid it entirely (constructive purity mandate). If so, remove this import
+--      path and use Decidable-based alternatives instead.
 
 namespace ProjectName.ModuleName
 
@@ -46,7 +49,7 @@ namespace ProjectName.ModuleName
 --         Use .mp/.mpr for iff directions
 
 -- ============================================================
--- Section 4: Exports (AI-GUIDE.md §30–31)
+-- Section 4: Exports (AI-GUIDE.md §17)
 -- ============================================================
 -- List ALL public (non-private) declarations alphabetically.
 -- This block goes AFTER end namespace, at top level.
