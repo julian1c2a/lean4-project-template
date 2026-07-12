@@ -22,6 +22,7 @@
 | Tipos, `Prop`s, estructuras, clases | `UpperCamelCase` | `IsFunction`, `IsNat`, `BoolAlg.Basic` |
 | Funciones que devuelven `Type` | según el tipo de retorno | `powerset` (→ tipo → `snake`), `IsNat` (→ `Prop` → `Upper`) |
 | Otros términos `Type` | `lowerCamelCase` | `successor`, `fromPeano`, `binUnion` |
+| Instancias de typeclasses | `lowerCamelCase` con prefijo `inst` | `instDecidableEqSubgroup`, `instLTTuple`, `instAddNat₀` |
 | Acrónimos | como grupo, mayúsculas u minúsculas | `ZFC` (namespace), `zfc` (en snake_case) |
 
 ---
@@ -259,6 +260,23 @@ predecible.
 ## 6. Espacios de Nombres (Namespaces)
 
 - Convención: `UpperCamelCase` (`Peano`, `ZFC`, `Polynomial`).
+- **Namespace plano, un nivel por fichero** (ver `DECISIONS.md` ADR-005): el
+  namespace de un fichero es `Project.<Concepto>` — normalmente el nombre del
+  fichero — **no** la ruta completa de directorio. `Combinatorics/GroupTheory/Sylow/Sylow.lean`
+  → `namespace Sylow` (dentro de `namespace Project`), no
+  `namespace Project.Combinatorics.GroupTheory.Sylow.Sylow`. Los directorios agrupan
+  ficheros por tema para navegación humana; no anidan namespaces.
+- **Un namespace, un fichero — nunca compartido**: si dos ficheros distintos
+  necesitan el mismo namespace interno porque tratan "el mismo tema" (p. ej. varios
+  ficheros bajo `GroupTheory/`), es casi siempre síntoma de que deberían tener cada
+  uno el suyo (`Action`, `NormalSubgroup`, `QuotientGroup`, …) y usar `open` entre
+  ellos — no fusionar sus declaraciones en un namespace compartido, que oculta qué
+  fichero define qué símbolo y arrastra colisiones de nombre.
+- **Grano más fino permitido dentro de un fichero**: un fichero puede declarar
+  sub-namespaces internos para distinguir sub-conceptos (p. ej. `FSet.lean` con
+  sub-namespaces `ℕ₀FSet`/`TupleFSet` para variantes del mismo patrón) — esto sí es
+  legítimo y complementa la regla anterior, siempre que se documente en el propio
+  fichero (ver `DECISIONS.md` ADR-005).
 - **Regla de no redundancia (crítica)**: nunca repetir el nombre del namespace dentro
   de los teoremas/definiciones que contiene — Lean ya añade el prefijo al usarlo desde
   fuera.
@@ -304,6 +322,24 @@ lectura de fórmulas complejas — pero debe mantenerse consistente en todo el p
 - Semántica: sustantivo para estructuras (`Group`, `Ring`, `TopologicalSpace`),
   adjetivo para propiedades (`DecidableEq`, `IsCommutative`, `Fintype`).
 - No añadir sufijos redundantes como `Class`.
+- **Instancias**: siempre `inst` + `UpperCamelCase` describiendo la clase y el tipo
+  (`instDecidableEqSubgroup`, `instLTTuple`). Las instancias automáticas generadas
+  por Lean 4 siguen este mismo patrón.
+
+### 8.1 Contraparte booleana (prefijo `b`)
+
+Cuando una relación o predicado `foo : α → α → Prop` tiene una versión booleana
+computacional, se nombra `bfoo : α → α → Bool`:
+
+| Proposición | Booleana | Lema de corrección |
+|---|---|---|
+| `lt₀ : ℕ₀ → ℕ₀ → Prop` | `blt₀ : ℕ₀ → ℕ₀ → Bool` | `blt_iff_Lt` |
+| `le₀ : ℕ₀ → ℕ₀ → Prop` | `ble₀ : ℕ₀ → ℕ₀ → Bool` | `ble_iff_Le` |
+| `gt₀ : ℕ₀ → ℕ₀ → Prop` | `bgt₀ : ℕ₀ → ℕ₀ → Bool` | `bgt_iff_Gt` |
+
+Regla: el lema de corrección lleva el sufijo `_iff` y relaciona la versión booleana
+con la proposicional vía `= true ↔ ...` o directamente como iff. Las instancias
+`Decidable` correspondientes se nombran `decidableFoo` o `instDecidableFoo`.
 
 ---
 

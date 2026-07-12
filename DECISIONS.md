@@ -102,20 +102,48 @@ futura integración con Mathlib si se desea.
 
 ---
 
-## ADR-005: Namespaces alineados con directorios
+## ADR-005: Namespace plano por fichero — los directorios organizan, no anidan namespaces
 
-**Fecha**: YYYY-MM-DD
+**Fecha**: 2026-07-12 (corrige una versión anterior de este ADR que proponía
+mirroring completo de directorio; revertido tras auditar la práctica real en Peano)
 **Estado**: Aceptado
 
-**Decisión**: cada subdirectorio corresponde a un sub-namespace:
-`ProjectName/Foo/Bar.lean` → `namespace ProjectName.Foo.Bar`.
+**Decisión**: cada fichero `.lean` recibe **un namespace propio de un solo nivel**
+bajo el namespace raíz del proyecto: `ProjectName/Foo/Bar.lean` →
+`namespace ProjectName.Bar` (**no** `ProjectName.Foo.Bar`). El nombre del namespace
+suele coincidir con el nombre del fichero (el concepto matemático que trata), no con
+su ruta completa. Los subdirectorios (`Foo/`) son **puramente organizativos** —
+agrupan ficheros por tema para navegación humana — y **no** determinan el namespace.
 
-**Justificación**: mapeo 1:1 claro entre sistema de ficheros y jerarquía de
-namespaces. Reduce la confusión sobre dónde vive cada definición. Escala bien a
-medida que el proyecto crece.
+Dentro de un mismo fichero puede haber sub-namespaces **más finos** que distingan
+sub-conceptos (p. ej. `ProjectName.FSet.ℕ₀FSet`, `ProjectName.FSet.TupleFSet` dentro
+de `FSet.lean`) — eso sí está permitido y es el "grano más fino" que complementa la
+regla, siempre que quede documentado en el propio fichero.
 
-**Consecuencias**: `new-module.bash` debe soportar creación en subdirectorios;
-`gen-root.bash` debe escanear recursivamente.
+**Regla derivada — un namespace no se comparte entre ficheros distintos**: si dos
+ficheros de un mismo directorio (p. ej. `GroupTheory/Action.lean` y
+`GroupTheory/NormalSubgroup.lean`) declaran literalmente el mismo namespace interno
+(`namespace GroupTheory`), es casi siempre un descuido, no una decisión — mezcla las
+declaraciones de ambos ficheros en un único namespace, dificulta saber qué fichero
+define qué símbolo, y arrastra colisiones de nombre silenciosas. Cada fichero
+consigue su propio namespace y usa `open Project.OtroFichero` para acceder a lo que
+necesite de sus dependencias.
+
+**Justificación**: es la convención que ya sigue de facto la mayoría del código real
+de los proyectos de este ecosistema (verificado por auditoría exhaustiva en Peano,
+2026-07-12: 57/57 ficheros de producción usaban `Peano.<Concepto>` plano, nunca la
+ruta completa de directorio) — codificar aquí lo que el código ya hace evita que la
+documentación contradiga la práctica real. Un mapeo 1:1 directorio↔namespace se
+vuelve verboso y fragil en proyectos con más de 3-4 niveles de subdirectorios
+temáticos (`Combinatorics/GroupTheory/Sylow/Sylow.lean` → `Peano.Sylow`, no
+`Peano.Combinatorics.GroupTheory.Sylow.Sylow`).
+
+**Consecuencias**: `new-module.bash` crea el fichero en el subdirectorio indicado
+pero declara el namespace con el nombre del fichero, no la ruta completa.
+`gen-root.bash` sigue escaneando subdirectorios recursivamente para los `import`,
+pero eso es independiente del namespace. Al revisar un PR/commit que introduce un
+namespace nuevo, comprobar que ningún otro fichero ya lo usa (`grep -rn "namespace
+ProjectName.NombreElegido"` antes de crear el fichero).
 
 ---
 

@@ -67,9 +67,14 @@ completo.
 
 ### (3.) Espacios de nombres (Namespaces)
 
-Los namespaces no son necesariamente iguales a los módulos. Documentar qué namespaces
-existen, a qué módulos pertenecen y cómo se relacionan. Todos derivan del namespace
-raíz del proyecto.
+**Namespace plano por fichero, un solo nivel bajo el namespace raíz** (ver
+`DECISIONS.md` ADR-005): `ProjectName/Foo/Bar.lean` → `namespace ProjectName.Bar`,
+**no** `ProjectName.Foo.Bar`. Los directorios organizan ficheros por tema; no anidan
+namespaces. Dentro de un fichero se permite un grano más fino (sub-namespaces para
+sub-conceptos), documentado localmente. **Nunca compartir el mismo namespace interno
+entre dos ficheros distintos** — cada fichero tiene el suyo; usar `open` para acceder
+a namespaces de otros ficheros. Documentar en REFERENCE.md qué namespaces existen, a
+qué módulo pertenece cada uno y cómo se relacionan.
 
 ### (4.) Definiciones introducidas
 
