@@ -51,6 +51,19 @@ Para buscar si has dejado demostraciones sin terminar (`sorry`):
 make sorry
 ```
 
+### Comprobar que la documentación no miente
+La plantilla incluye un control que compara lo que **dicen** tus documentos con lo que
+**hay** en el código (jobs de compilación, número de módulos, `sorry`, símbolos citados
+que ya no existen):
+```bash
+make docsync          # completo
+make docsync-quick    # sin recompilar, para iterar
+```
+> **Por qué importa.** El fallo típico no es olvidarse de actualizar un documento: es
+> actualizar **solo su banner** y dejar tres líneas más abajo una tabla que dice otra cosa.
+> Ese documento se contradice a sí mismo y quien lo lee se cree la mitad equivocada.
+> Ajusta el bloque `CONFIGURACIÓN` de `check-doc-sync.bash` al adoptar la plantilla.
+
 ---
 
 ## 3. Mantener el Proyecto Actualizado

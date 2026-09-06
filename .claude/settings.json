@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lake build)",
+      "Bash(lake build *)",
+      "Bash(lake env lean *)",
+      "Bash(bash check-sorry.bash*)",
+      "Bash(bash check-doc-sync.bash*)",
+      "Bash(bash gen-root.bash)",
+      "Bash(bash new-module.bash *)",
+      "Bash(bash git-lock.bash list)",
+      "Bash(bash git-lock.bash lock:*)",
+      "Bash(bash git-lock.bash unlock:*)",
+      "Bash(make build)",
+      "Bash(make sorry)",
+      "Bash(make docsync*)",
+      "Bash(make status)",
+      "PowerShell(lake build)",
+      "PowerShell(lake build *)",
+      "PowerShell(lake env lean *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Test-Path *)"
+    ]
+  }
+}

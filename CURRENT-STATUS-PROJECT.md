@@ -3,6 +3,9 @@
 **Last updated:** 2025-01-01 00:00
 **Author**: Your Name
 
+> **Cifras canónicas** (las verifica `check-doc-sync.bash`, AI-GUIDE §27 — actualízalas en cada pasada):
+> **N jobs · 1 módulos propios · 0 sorry vigentes · 0 axiom propios**.
+
 ---
 
 ## Executive Summary

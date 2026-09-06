@@ -2,7 +2,7 @@
 # Usage: make <target>
 # Requires: bash, lake, git
 
-.PHONY: build clean rebuild sorry status lock unlock list init new help
+.PHONY: build clean rebuild sorry docsync docsync-quick status lock unlock list init new root update-toolchain help
 
 ## Build the project
 build:
@@ -18,6 +18,14 @@ rebuild: clean build
 ## Check for sorry statements
 sorry:
 	@bash check-sorry.bash
+
+## Comprueba que la documentacion cuadra con el codigo (AI-GUIDE §27)
+docsync:
+	@bash check-doc-sync.bash
+
+## Idem, sin lake build (para iterar rapido)
+docsync-quick:
+	@bash check-doc-sync.bash --quick
 
 ## Show project status: locked files + sorry count
 status:
@@ -54,7 +62,7 @@ new:
 root:
 	@bash gen-root.bash
 
-## Update Lean toolchain to latest (or specific version: make update-toolchain VERSION=v4.29.0)
+## Update Lean toolchain: make update-toolchain [VERSION=v4.31.0]
 update-toolchain:
 	@bash update-toolchain.bash $(VERSION)
 

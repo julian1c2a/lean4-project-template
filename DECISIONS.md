@@ -17,22 +17,37 @@ Registro de decisiones arquitectónicas (ADR) de este proyecto. Cada entrada doc
 
 ## ⚠️ MANDATORIES (reglas vinculantes de este proyecto — lectura obligatoria)
 
-> Plantilla vacía. Rellenar solo si el proyecto tiene directivas fundacionales no
-> negociables — es decir, reglas cuyo incumplimiento se considera un defecto de build,
-> no una preferencia de estilo. Ejemplos reales de proyectos hermanos (no aplican aquí
-> a menos que se declaren explícitamente):
+Estas reglas son **vinculantes**, no preferencias de estilo. Su incumplimiento es un
+**defecto de build**. [`AI-GUIDE.md`](AI-GUIDE.md) redirige obligatoriamente aquí antes
+de tocar cualquier `.lean`. **Cada regla enlaza a su ADR justificativo y declara cómo se
+verifica** — una MANDATORY sin verificación mecánica es una intención, no una regla.
+
+| # | MANDATORY | ADR | Verificación |
+|---|---|---|---|
+| **M-1** | *(rellenar o declarar que no hay ninguna)* | — | — |
+
+> **Plantilla vacía.** Rellenar solo si el proyecto tiene directivas fundacionales no
+> negociables. Ejemplos reales de proyectos hermanos (no aplican aquí a menos que se
+> declaren explícitamente):
 >
 > - *Pureza constructiva*: cero `Classical.*`, footprint objetivo
->   `#print axioms ⊆ {propext, Quot.sound}`, verificado por un gate `#assert_no_classical`.
+>   `#print axioms ⊆ {propext, Quot.sound}`, verificado por un gate exhaustivo
+>   (`#assert_constructive_footprint` sobre todas las declaraciones propias).
 > - *Tipo base exclusivo*: usar siempre `ℕ₀` de una librería propia y nunca `Nat` de
 >   Lean, salvo excepción técnica documentada (kernel, `sizeOf`, `termination_by`).
+>   Corolario aprendido: medidas de terminación **lexicográficas**, nunca aritméticas
+>   ponderadas — estas últimas introducen `Classical.choice` por la puerta de atrás.
+> - *Reutilizar los tipos públicos de la dependencia*, no redefinir subtipos privados
+>   que ya existen aguas arriba.
 > - *Cero axiomas espurios*: cualquier `axiom` declarado debe llevar su justificación
 >   en `AXIOMS.md` (o equivalente) y, si se demuestra innecesario, se retira en vez de
->   mantenerse "por si acaso".
+>   mantenerse "por si acaso". Un axioma sin ADR ha llegado a hacer **inconsistente**
+>   la teoría objeto en un proyecto hermano.
 >
-> Si no hay ninguna directiva de este tipo, deja esta sección con el siguiente aviso:
+> Si no hay ninguna directiva de este tipo, sustituye la tabla por:
 > **"Sin MANDATORIES declaradas — este proyecto no tiene directivas fundacionales no
-> negociables más allá de los ADR de abajo."**
+> negociables más allá de los ADR de abajo."** Es una respuesta válida; no haberla
+> escrito, no.
 
 ---
 

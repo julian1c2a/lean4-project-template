@@ -67,6 +67,9 @@ make build
 # Check for sorry
 make sorry
 
+# Check that the docs still match the code (AI-GUIDE §27)
+make docsync
+
 # Show locked files and sorry status
 make status
 
@@ -82,12 +85,12 @@ bash gen-root.bash
 |----------|---------|
 | [USER_GUIDE.md](USER_GUIDE.md) | 🚀 **Start Here: How to use this template and its tools** |
 | [WORKFLOW.md](WORKFLOW.md) | ⭐ **Complete development workflow** |
+| [DECISIONS.md](DECISIONS.md) | 🚨 **MANDATORIES + ADRs — read before touching any `.lean`** |
 | [REFERENCE.md](REFERENCE.md) | Technical reference for all definitions and theorems |
 | [AI-GUIDE.md](AI-GUIDE.md) | Documentation standards, naming conventions, and AI assistant guide |
 | [NAMING-CONVENTIONS.md](NAMING-CONVENTIONS.md) | Full Mathlib-style naming dictionary and formation rules |
 | [CHANGELOG.md](CHANGELOG.md) | Change history |
 | [DEPENDENCIES.md](DEPENDENCIES.md) | Module dependency diagrams |
-| [DECISIONS.md](DECISIONS.md) | Architectural Decision Records (ADR) |
 | [CURRENT-STATUS-PROJECT.md](CURRENT-STATUS-PROJECT.md) | Current project status and metrics |
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Planned development phases |
 | [PLANNING.md](PLANNING.md) | Long-term roadmap and strategic goals |

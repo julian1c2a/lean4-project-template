@@ -1,6 +1,10 @@
 #!/bin/bash
 # check-sorry.bash — Find all sorry statements in .lean files
 #
+# ⚠️ Cuenta `sorry` como TOKEN: excluye `sorryAx`, las menciones entre backticks
+#    (`sorry` en prosa y docstrings) y las lineas de comentario. Contarlas daba falsos
+#    positivos — un modulo de metaprogramacion que habla de `sorry` no tiene sorries.
+#
 # Usage:
 #   bash check-sorry.bash           # check all .lean files
 #   bash check-sorry.bash staged    # check only staged files (for CI)
@@ -29,13 +33,13 @@ echo "=== sorry report ==="
 while IFS= read -r FILE; do
     [ -z "$FILE" ] && continue
     [ ! -f "$FILE" ] && continue
-    COUNT=$(grep -c 'sorry' "$FILE" 2>/dev/null || true)
+    COUNT=$(grep -cE '(^|[^a-zA-Z_`])sorry([^a-zA-Z_`]|$)' "$FILE" 2>/dev/null | head -1 || true)
     COUNT="${COUNT//[^0-9]/}"
     COUNT="${COUNT:-0}"
     if [ "$COUNT" -gt 0 ] 2>/dev/null; then
         echo ""
         echo "📄 $FILE ($COUNT sorry)"
-        grep -n 'sorry' "$FILE" | sed 's/^/   /'
+        grep -nE '(^|[^a-zA-Z_`])sorry([^a-zA-Z_`]|$)' "$FILE" | sed 's/^/   /'
         TOTAL=$((TOTAL + COUNT))
         FILES_WITH_SORRY=$((FILES_WITH_SORRY + 1))
     fi
