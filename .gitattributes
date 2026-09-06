@@ -1,0 +1,13 @@
+# Normalización de finales de línea.
+#
+# `text=auto` normaliza a LF dentro del repositorio y deja el árbol de trabajo en el
+# formato de cada plataforma.
+* text=auto
+
+# ⚠️ Los `.bash` se ejecutan con Git Bash en Windows y con bash en el runner de CI.
+# Si se les cuela CRLF fallan con «$'\r': command not found», y el fallo es
+# desconcertante porque el fichero se ve bien. Se fuerzan a LF SIEMPRE.
+*.bash text eol=lf
+
+# Ídem: los workflows los interpreta el runner de Linux.
+*.yml text eol=lf

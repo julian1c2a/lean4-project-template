@@ -20,8 +20,13 @@ jobs:
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --no-modify-path
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
+      # ⚠️ Escalar de BLOQUE (`run: |`) a propósito. En una sola línea, el `-d:` de
+      # `cut` lleva dos puntos seguidos de espacio y YAML lo interpreta como un mapa:
+      # «mapping values are not allowed here», y el workflow ni arranca (falla en 0s
+      # con «workflow file issue»). Detectado 2026-09-06 en el primer push real.
       - name: Install Lean toolchain
-        run: elan toolchain install $(cat lean-toolchain | cut -d: -f2)
+        run: |
+          elan toolchain install $(cut -d: -f2 lean-toolchain)
 
       - name: Cache Lake packages
         uses: actions/cache@v4
