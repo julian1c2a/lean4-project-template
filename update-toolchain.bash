@@ -68,7 +68,13 @@ fi
 
 # ── Instalar, probar y commitear/revertir ───────────────────────────────────
 echo "Instalando toolchain $TARGET..."
-elan toolchain install "leanprover/lean4:$TARGET"
+# ⚠️ `|| true` MEDIDO, no defensivo: si el toolchain YA está instalado, elan sale con
+# error —«is already installed»— y con `set -e` el script abortaba ahí. O sea que
+# actualizar a una versión que ya tienes en la máquina era imposible: exactamente el caso
+# de un proyecto que va por detrás de sus hermanos. Encontrado el 2026-09-17 al alinear la
+# plantilla (v4.29.1) con la familia (v4.31.0). Si la instalación falla de verdad, lo dice
+# el `lake build` de abajo, que es quien decide.
+elan toolchain install "leanprover/lean4:$TARGET" || true
 
 echo "$NEW" > lean-toolchain
 
