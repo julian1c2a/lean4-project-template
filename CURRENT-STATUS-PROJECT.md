@@ -4,7 +4,10 @@
 **Author**: Your Name
 
 > **Cifras canónicas** (las verifica `check-doc-sync.bash`, AI-GUIDE §27 — actualízalas en cada pasada):
-> **N jobs · 1 módulos propios · 0 sorry vigentes · 0 axiom propios**.
+> **4 jobs · 1 módulos propios · 0 sorry vigentes · 0 axiom propios**.
+>
+> ⚠️ La cifra de `jobs` **no es un invariante**: depende de cuántas dependencias haya que
+> reconstruir. Se actualiza en cada pasada, y el script la comprueba contra el build real.
 
 ---
 

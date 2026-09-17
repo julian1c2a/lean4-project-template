@@ -12,9 +12,17 @@
 #      más abajo, una tabla que decía «113 jobs, 99 módulos». Un ADR llevó un mes
 #      diciendo «no implementado» sobre algo hecho.
 #   2. Se citan como vigentes símbolos que YA NO EXISTEN en el código.
+#   3. — y el más caro, medido el 2026-09-17 — **el propio control daba VERDE sin
+#      comprobar nada**: sin `lake` en el PATH, la cifra de `jobs` quedaba vacía, [A] se
+#      saltaba entero y el script anunciaba «✓ sin cifras obsoletas» con exit 0, sobre un
+#      árbol que con `lake` daba exit 1. Un control tiene TRES resultados —pasa, falla,
+#      **no he podido comprobarlo**— y colapsar el tercero en el primero lo convierte en
+#      decoración. Regla: si no se puede medir, es ROJO.
 #
-# [A], [C] y [D] son OBJETIVOS y rompen el check. [B] es un AVISO que pide juicio:
-# hay menciones legítimas de símbolos inexistentes (históricas, planificadas, descartadas).
+# [A1] (línea de cifras canónicas), [C] y [D] son OBJETIVOS y rompen el check. [A2] (cifras
+# sueltas en la prosa de cabecera) y [B] (símbolos muertos) son AVISOS que piden juicio: hay
+# menciones legítimas de cifras y símbolos que ya no son los vigentes — históricas,
+# planificadas, descartadas. ⚠️ Y si el control NO PUEDE MEDIR, es rojo, no verde.
 #
 # Uso:
 #   bash check-doc-sync.bash            # comprobación completa
@@ -89,14 +97,63 @@ echo
 DOCS="$AUTHORITATIVE_BASE $(ls doc/REFERENCE-*.md 2>/dev/null)"
 FAIL=0
 
-# ─── 2. [A] CIFRAS OBSOLETAS ─────────────────────────────────────────────────
+# ─── 2. [A] CIFRAS ───────────────────────────────────────────────────────────
+# Reescrito el 2026-09-17 tras una auditoría que encontró este control en el PEOR de los
+# estados posibles: daba VERDE cuando no podía medir, y ROJO por falsos positivos cuando
+# sí podía. Las dos mitades están arregladas por separado.
 echo "════ [A] CIFRAS ════"
 A_FAIL=0
-# ALCANCE: sólo la REGIÓN DE CABECERA (primeras 100 líneas) de cada doc autoritativo.
-# Ahí viven el banner y las tablas resumen — lo que AFIRMA el estado actual. Más abajo
-# están los registros de logros, donde «93 jobs» es historia correcta, no un error.
-# Esta acotación es la que hace utilizable el control: sin ella, los diarios disparan
-# una docena de falsos positivos y nadie vuelve a mirarlo.
+A_WARN=0
+
+# ── [A0] ¿SE PUEDE MEDIR? ────────────────────────────────────────────────────
+# 🔑 El fallo que esto cierra: sin `lake` en el PATH, `JOBS` quedaba VACÍO, el control de
+# cifras se SALTABA entero y el script anunciaba «✓ sin cifras obsoletas» con exit 0. Un
+# control que no puede medir y da verde es peor que no tenerlo: con ese verde vacuo se
+# empujó un commit que tenía este mismo check en rojo. Si no se puede medir, es ROJO.
+if [ "$QUICK" = "1" ]; then
+  echo "  ⚠️  jobs: NO COMPROBADO (--quick, y eso lo has pedido tú)"
+elif [ -z "$JOBS" ]; then
+  echo "  ✗ jobs: NO MEDIBLE — ¿está 'lake' en el PATH? (elan: ~/.elan/bin)"
+  echo "      Un control que no mide NO es un control verde. Esto es CONTROL VACÍO."
+  A_FAIL=1
+fi
+
+# ── [A1] LA LÍNEA DE CIFRAS CANÓNICAS (AI-GUIDE §27) — BLOQUEANTE ────────────
+# Las cifras se comprueban contra UNA línea de forma fija, no contra la prosa. La prosa
+# de un documento de estado habla también del pasado —«el build bajó de 25 a 21 jobs»,
+# «las insignias anteriores decían 22 jobs»— y contra eso no hay lista de excluyentes
+# que valga: cada salto de línea vuelve a romperla. Medido: 2 falsos positivos, 0
+# verdaderos. La convención existe justamente para no tener que adivinar.
+CANON_FILE=CURRENT-STATUS-PROJECT.md
+CANON_RE='[0-9]+ jobs · [0-9]+ módulos propios · [0-9]+ `?sorry`? vigentes · [0-9]+ `?axiom`? propios'
+CANON=$(grep -oE "$CANON_RE" "$CANON_FILE" 2>/dev/null | head -1)
+if [ -z "$CANON" ]; then
+  echo "  ✗ falta la LÍNEA DE CIFRAS CANÓNICAS en $CANON_FILE (AI-GUIDE §27):"
+  echo "        N jobs · N módulos propios · N sorry vigentes · N axiom propios"
+  echo "      Sin ella este control no comprueba NADA. CONTROL VACÍO, no verde."
+  A_FAIL=1
+else
+  # shellcheck disable=SC2046
+  set -- $(echo "$CANON" | grep -oE '[0-9]+')
+  CANON_FAIL=0
+  canon_cmp () {   # $1 = lo que dice el doc   $2 = lo real   $3 = etiqueta
+    if [ -n "$2" ] && [ "$1" != "$2" ]; then
+      echo "  ✗ $3: la línea canónica dice $1, real $2"
+      CANON_FAIL=1; A_FAIL=1
+    fi
+  }
+  canon_cmp "${1:-}" "$JOBS"    "jobs"
+  canon_cmp "${2:-}" "$MODULES" "módulos propios"
+  canon_cmp "${3:-}" "$SORRY"   "sorry vigentes"
+  canon_cmp "${4:-}" "$AXIOMS"  "axiom propios"
+  [ "$CANON_FAIL" = "0" ] && echo "  ✓ línea canónica al día: $CANON"
+fi
+
+# ── [A2] EL RESTO DE LA CABECERA — AVISO, no bloqueante ──────────────────────
+# Se sigue mirando la prosa de las primeras 100 líneas de cada doc autoritativo, porque
+# ahí han aparecido cifras podridas de verdad. Pero como no sabe distinguir una
+# afirmación de un recuerdo, AVISA y no rompe. Más abajo están los registros de logros,
+# donde «93 jobs» es historia correcta.
 HEADREGION=$(mktemp)
 : > "$HEADREGION"
 for d in $DOCS; do
@@ -106,41 +163,30 @@ done
 
 # ⚠️ Los patrones se pasan SIEMPRE entre comillas SIMPLES: un backtick dentro de
 #    comillas dobles lo ejecuta bash como sustitución de comando y el patrón queda roto.
-check_num () {   # $1 = regex con grupo numérico   $2 = valor correcto   $3 = etiqueta
+warn_num () {   # $1 = regex con grupo numérico   $2 = valor correcto   $3 = etiqueta
   local pat="$1" good="$2" label="$3" hits n
+  [ -z "$good" ] && return 0
   # Se descartan: menciones históricas, aproximaciones (~40), rangos (40-50) y ejemplos.
   hits=$(grep -nE "$pat" "$HEADREGION" 2>/dev/null \
-         | grep -viE "hist[oó]rico|previo|antes|era |fueron|→|->|en su momento|entonces|ya no|20[0-9]{2}-[0-9]{2}-[0-9]{2}|~|p\. ej|ejemplo|umbral|[0-9]+-[0-9]+" || true)
+         | grep -viE "hist[oó]rico|previo|anterior|antes|era |fueron|→|->|en su momento|entonces|ya no|baj[oó]|subi[oó]|20[0-9]{2}-[0-9]{2}-[0-9]{2}|~|p\. ej|ejemplo|umbral|[0-9]+-[0-9]+" || true)
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     n=$(echo "$line" | grep -oE "$pat" | grep -oE "[0-9]+" | head -1)
     if [ -n "$n" ] && [ "$n" != "$good" ]; then
-      echo "  ✗ $label: dice $n, real $good"
+      echo "  ⚠️  $label: dice $n, real $good — ¿afirmación o recuerdo?"
       echo "      ${line:0:150}"
-      A_FAIL=1
+      A_WARN=1
     fi
   done <<< "$hits"
-  # Un patrón sin ninguna aparición no está comprobando nada: se avisa, no se calla.
-  [ -z "$hits" ] && echo "  ⚠️  $label: la frase no aparece en ningún doc autoritativo — control VACÍO"
   return 0
 }
-# ⚠️ Estas cifras se comprueban con la FRASE EXACTA que usan los documentos de estado.
-# Un patrón que no encuentra su frase en ninguna parte **da verde sin haber comprobado
-# nada** — el peor resultado posible para un control cuyo cometido es que no te fibres de
-# lo que dicen los docs. Por eso la plantilla fija una convención:
-#
-#   CURRENT-STATUS-PROJECT.md lleva en su cabecera una línea de CIFRAS CANÓNICAS
-#   con esta forma literal (AI-GUIDE §27):
-#
-#       N jobs · N módulos propios · N sorry vigentes · N axiom propios
-#
-# Si cambias el fraseo, cámbialo en los dos sitios.
-[ -n "$JOBS" ] && check_num '[0-9]+ jobs' "$JOBS" "jobs"
-check_num '[0-9]+ módulos propios' "$MODULES" "módulos propios"
-check_num '[0-9]+ `?sorry`? (vigentes|propios|restantes|reales)' "$SORRY" "sorry"
-check_num '[0-9]+ `?axiom`? propios' "$AXIOMS" "axiom propios"
+warn_num '[0-9]+ jobs' "$JOBS" "jobs"
+warn_num '[0-9]+ módulos propios' "$MODULES" "módulos propios"
+warn_num '[0-9]+ `?sorry`? (vigentes|propios|restantes|reales)' "$SORRY" "sorry"
+warn_num '[0-9]+ `?axiom`? propios' "$AXIOMS" "axiom propios"
 rm -f "$HEADREGION"
-[ "$A_FAIL" = "0" ] && echo "  ✓ sin cifras obsoletas" || FAIL=1
+[ "$A_WARN" = "0" ] && echo "  ✓ sin cifras sospechosas en la prosa de cabecera"
+[ "$A_FAIL" = "0" ] || FAIL=1
 
 # ─── 3. [B] SÍMBOLOS MUERTOS ─────────────────────────────────────────────────
 # Un símbolo está MUERTO si se cita en un doc AUTORITATIVO pero ninguna declaración

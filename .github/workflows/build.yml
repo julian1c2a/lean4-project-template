@@ -12,6 +12,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ⚠⚠ SI ESTE PROYECTO TIENE DEPENDENCIAS LOCALES (`require X from "../X"`), este
+      # checkout único NO BASTA: el runner no tiene el árbol de la hermana y el build muere
+      # con «X: package directory not found». Y como `actions/checkout` no admite un `path:`
+      # fuera del workspace, hay que clonar TAMBIÉN este repo en un subdirectorio para que
+      # `../X` caiga dentro. El patrón completo, ya probado en ROBINSON_PlusPlus y PeanoRF:
+      #
+      #   jobs:
+      #     build:
+      #       defaults:
+      #         run:
+      #           working-directory: MiProyecto      # los `run` salen de la raíz del repo
+      #       steps:
+      #         - uses: actions/checkout@v4
+      #           with: { path: MiProyecto }
+      #         - uses: actions/checkout@v4
+      #           with: { repository: usuario/X, ref: master, path: X }
+      #
+      # ⚠️ Los `path:`/`hashFiles` de un `uses:` NO ven el `working-directory`: van con el
+      #    prefijo del subdirectorio.
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -44,3 +63,10 @@ jobs:
       - name: Check for sorry
         run: bash check-sorry.bash
         continue-on-error: true   # Warning only — change to false to make it blocking
+
+      # El control de sincronía documentación ↔ código (AI-GUIDE §27). BLOQUEANTE y SIN
+      # `--quick`: con `--quick` no se comprueba la cifra de `jobs`, y entonces el banner
+      # no lo verifica nadie más que una ejecución local. El `lake build` de arriba ya dejó
+      # todo cacheado, así que repetirlo aquí es barato.
+      - name: Check doc sync
+        run: bash check-doc-sync.bash

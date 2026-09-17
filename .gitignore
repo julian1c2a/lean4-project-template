@@ -23,3 +23,9 @@ Thumbs.db
 
 # Lock file temp
 locked_files.txt.tmp
+
+# ⚠⚠ NO añadir `.github` aquí. Medido el 2026-09-17 en dos proyectos de la familia
+# (Peano y AczelSetTheory): tenían `.github` ignorado, así que su workflow existía en
+# disco, se veía al abrir el proyecto… y NUNCA llegó a GitHub. `gh api
+# repos/<user>/<repo>/actions/workflows` devolvía `total_count: 0`. Una CI que no existe
+# no falla: simplemente no dice nada, que es la peor forma de estar roto.
